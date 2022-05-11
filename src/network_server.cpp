@@ -14,7 +14,7 @@ NetworkServer::NetworkServer() :
 	m_address.host = ENET_HOST_ANY;
 	m_address.port = 7777;
 
-	m_server = enet_host_create(&m_address, 2, 2, 0, 0);
+	m_server = enet_host_create(&m_address, 2, 1, 0, 0);
 	if (m_server == nullptr)
 	{
 		enet_deinitialize();
@@ -108,12 +108,13 @@ void message_processing(int tid, bool& server_on)
 
 		auto& player{ client_message.m_player };
 		std::string& data{ client_message.m_message };
-		if (data[0] == 'n' && data[1] == 'n')
+		if (data[0] == 'n' && data[1] == 'n') // nickname
 		{
 			player->m_name = data.substr(2, data.size() - 1);
 		}
-		else if (data == "so")
+		else if (data == "so") // search opponent
 		{
+			std::cout << player->m_name << " is searching an opponent !" << std::endl;
 			player->m_in_queue = true;
 		}
 	}
