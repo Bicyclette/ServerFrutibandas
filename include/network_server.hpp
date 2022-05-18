@@ -9,13 +9,33 @@
 #include <enet/enet.h>
 #include <string>
 #include <vector>
+#include <array>
 #include <random>
 #include <thread>
+#include <sstream>
 #include <mutex>
 #include <queue>
 
-// "nn" : nickname
-// "so" : search opponent
+struct Game;
+
+// "nn"  : nickname
+// "pp"  : profile picture
+// "so"  : search opponent
+// "sso" : stop search opponent
+// "gc:" : game chat
+// eye colors
+
+struct Avatar
+{
+	int m_gender;		// 0 : male, 1 : female
+	int m_hair;			// [0,7] : [mixte, herisson, decoiffe, arriere, meche avant, mi-long, frange, au_bol, ponytail]
+	int m_eyes;			// [0,4] : [manga, amande, gros, egypte, mascara]
+	int m_mouth;		// [0,2] : [petite, moyenne, grande]
+	int m_skin_color;	// [0,9] : [pale1, pale2, pale3, mc1, mc2, mc3, m1, m2, m3, m4]
+	int m_hair_color;	// [0,12] : [rouge, orange, j1, j2, v1, v2, b1, b2, b3, pourpre, violet, rose, rose_bonbon]
+	int m_eyes_color;	// [0,6] : [jaune, marron, rouge, violet, rose, bleu, vert]
+	std::string m_data;	// all above data for network
+};
 
 struct Player
 {
@@ -34,9 +54,58 @@ struct Player
 	{}
 
 	std::string m_name;
+	Avatar m_avatar;
+	std::shared_ptr<Game> m_game;
 	ENetPeer* m_peer;
 	bool m_in_queue;
 	bool m_in_game;
+};
+
+struct Fruit
+{
+	// >>>>>>>>>> methods
+	Fruit() : m_type(-1), m_petrified(false) {}
+	// >>>>>>>>>> properties
+	int m_type;	// -1 = none, 0 = orange, 1 = banane
+	bool m_petrified;
+};
+
+struct Tile
+{
+	// >>>>>>>>>> methods
+	Tile() : m_alive(true), m_trap(false) {}
+
+	// >>>>>>>>>> properties
+	bool m_alive;
+	bool m_trap;
+};
+
+struct Board
+{
+	int orange_count()
+	{
+		int count{ 0 };
+		for (int i{ 0 }; i < 8; ++i) {
+			for (int j{ 0 }; j < 8; ++j) {
+				count += (m_fruit[j][i].m_type == 0) ? 1 : 0;
+			}
+		}
+		return count;
+	}
+
+	int banane_count()
+	{
+		int count{ 0 };
+		for (int i{ 0 }; i < 8; ++i) {
+			for (int j{ 0 }; j < 8; ++j) {
+				count += (m_fruit[j][i].m_type == 1) ? 1 : 0;
+			}
+		}
+		return count;
+	}
+
+	Tile m_tile[8][8];
+	Fruit m_fruit[8][8];
 };
 
 struct Game
@@ -67,14 +136,23 @@ struct Game
 			for (int j{ 0 }; j < 8; ++j)
 			{
 				glm::vec2 pos = glm::vec2(j, i);
-				if (!std::count(orange.begin(), orange.end(), pos))
-					m_board[j][i] = 1;
-				else
-					m_board[j][i] = 0;
+				if (!std::count(orange.begin(), orange.end(), pos)) {
+					m_board.m_fruit[j][i].m_type = 1; // banane
+				}
+				else {
+					m_board.m_fruit[j][i].m_type = 0; // orange
+				}
 			}
 		}
 		for (int i{ 0 }; i < 6; ++i)
-			card[i] = card_gen(gen);
+		{
+			int card_id;
+			do
+			{
+				card_id = card_gen(gen);
+			} while (std::count(card.begin(), card.end(), card_id) > 0);
+			card[i] = card_id;
+		}
 
 		// set initial turn
 		std::uniform_int_distribution<> turn_gen(0, 1);
@@ -82,22 +160,7 @@ struct Game
 	}
 
 	std::shared_ptr<Player> m_player[2];
-
-	// -1 : destroyed
-	//  0 : orange
-	//  1 : banane
-	//  2 : empty
-	int m_board[8][8] = {
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2},
-		{2,2,2,2,2,2,2,2}
-	};
-
+	Board m_board;
 	// -1 => undefined
 	//  0 => enclume
 	//  1 => celerite
@@ -111,9 +174,8 @@ struct Game
 	//  9 => entracte
 	// 10 => solo
 	// 11 => piege
-	int card[6] = {-1,-1,-1,-1,-1,-1};
-	int cardOwner[6] = { -1,-1,-1,-1,-1,-1 }; // reference the index of the player in the m_player array
-
+	std::array<int, 6> card = {-1,-1,-1,-1,-1,-1};
+	int cardOwner[6] = { 0,0,0,1,1,1 }; // reference the index of the player in the m_player array
 	int turn{-1}; // reference the index of the player in the m_player array
 	int remaining_time[2] = {360, 360}; // in seconds (6 min)
 	int winner{-1};
@@ -132,18 +194,16 @@ struct ClientMessage
 	std::string m_message;
 };
 
-inline std::queue<ClientMessage> g_message_queue;
-inline std::mutex g_message_mutex;
-void message_processing(int tid, bool& server_on);
-
 class NetworkServer
 {
 	public:
 
 		NetworkServer();
 		~NetworkServer();
+		bool& get_active() { return m_active; }
 		void run();
 		void shutdown();
+		void send_data(ENetPeer* peer, std::string data);
 
 	private:
 
@@ -152,13 +212,15 @@ class NetworkServer
 	private:
 
 		bool m_active;
-		const unsigned int m_num_threads;
-		std::vector<std::thread> m_thread_pool;
 		ENetAddress m_address;
 		ENetHost* m_server;
 		ENetEvent m_event;
 		std::vector<std::shared_ptr<Player>> m_player;
-		std::vector<Game> m_game;
+		std::vector<std::shared_ptr<Game>> m_game;
 };
+
+inline std::queue<ClientMessage> g_message_queue;
+inline std::mutex g_message_mutex;
+inline std::mutex g_server_mutex;
 
 #endif
