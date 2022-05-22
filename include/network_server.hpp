@@ -23,7 +23,7 @@ struct Game;
 // "so"  : search opponent
 // "sso" : stop search opponent
 // "gc:" : game chat
-// eye colors
+// "mv"  : moving fruits
 
 struct Avatar
 {
@@ -82,6 +82,13 @@ struct Tile
 
 struct Board
 {
+	Board() :
+		boundLeft(0),
+		boundRight(7),
+		boundTop(0),
+		boundBottom(7)
+	{}
+
 	int orange_count()
 	{
 		int count{ 0 };
@@ -104,8 +111,197 @@ struct Board
 		return count;
 	}
 
+	void print()
+	{
+		for (int line{ 0 }; line < 8; ++line)
+		{
+			for (int col{ 0 }; col < 8; ++col)
+			{
+				int t = m_fruit[line][col].m_type;
+				if (t > -1) {
+					std::cout << ' ' << m_fruit[line][col].m_type << ' ';
+
+				}
+				else {
+					std::cout << m_fruit[line][col].m_type << ' ';
+				}
+			}
+			std::cout << std::endl;
+		}
+	}
+
+	void update_up(int fruit)
+	{
+		int enemy = (fruit == 0) ? 1 : 0;
+		for (int line{ boundTop }; line <= boundBottom; ++line)
+		{
+			for (int col{ boundLeft }; col <= boundRight; ++col)
+			{
+				if (m_fruit[line][col].m_type == enemy) {
+					//check if there is a pusher down the column
+					int l{ line };
+					while (m_fruit[l][col].m_type == enemy && l <= boundBottom) {
+						l++;
+					}
+					if (l == boundBottom + 1) {
+						continue;
+					}
+					else if (m_fruit[l][col].m_type == fruit) {
+						m_fruit[line][col].m_type = -1;
+						if ((line - 1) >= boundTop) {
+							m_fruit[line - 1][col].m_type = enemy;
+						}
+					}
+				}
+				else if (m_fruit[line][col].m_type == fruit) {
+					m_fruit[line][col].m_type = -1;
+					if ((line - 1) >= boundTop) {
+						m_fruit[line - 1][col].m_type = fruit;
+					}
+				}
+			}
+		}
+	}
+
+	void update_down(int fruit)
+	{
+		int enemy = (fruit == 0) ? 1 : 0;
+		for (int line{ boundBottom }; line >= boundTop; --line)
+		{
+			for (int col{ boundLeft }; col <= boundRight; ++col)
+			{
+				if (m_fruit[line][col].m_type == enemy) {
+					//check if there is a pusher up the column
+					int l{ line };
+					while (m_fruit[l][col].m_type == enemy && l >= boundTop) {
+						l--;
+					}
+					if (l == boundTop - 1) {
+						continue;
+					}
+					else if (m_fruit[l][col].m_type == fruit) {
+						m_fruit[line][col].m_type = -1;
+						if ((line + 1) <= boundBottom) {
+							m_fruit[line + 1][col].m_type = enemy;
+						}
+					}
+				}
+				else if (m_fruit[line][col].m_type == fruit) {
+					m_fruit[line][col].m_type = -1;
+					if ((line + 1) <= boundBottom) {
+						m_fruit[line + 1][col].m_type = fruit;
+					}
+				}
+			}
+		}
+	}
+
+	void update_right(int fruit)
+	{
+		int enemy = (fruit == 0) ? 1 : 0;
+		for (int line{ boundTop }; line <= boundBottom; ++line)
+		{
+			for (int col{ boundRight }; col >= boundLeft; --col)
+			{
+				if (m_fruit[line][col].m_type == enemy) {
+					//check if there is a pusher on the left side of the line
+					int c{ col };
+					while (m_fruit[line][c].m_type == enemy && c >= boundLeft) {
+						c--;
+					}
+					if (c == boundLeft - 1) {
+						continue;
+					}
+					else if (m_fruit[line][c].m_type == fruit) {
+						m_fruit[line][col].m_type = -1;
+						if ((col + 1) <= boundRight) {
+							m_fruit[line][col + 1].m_type = enemy;
+						}
+					}
+				}
+				else if (m_fruit[line][col].m_type == fruit) {
+					m_fruit[line][col].m_type = -1;
+					if ((col + 1) <= boundRight) {
+						m_fruit[line][col + 1].m_type = fruit;
+					}
+				}
+			}
+		}
+	}
+
+	void update_left(int fruit)
+	{
+		int enemy = (fruit == 0) ? 1 : 0;
+		for (int line{ boundTop }; line <= boundBottom; ++line)
+		{
+			for (int col{ boundLeft }; col <= boundRight; ++col)
+			{
+				if (m_fruit[line][col].m_type == enemy) {
+					//check if there is a pusher on the right side of the line
+					int c{ col };
+					while (m_fruit[line][c].m_type == enemy && c <= boundRight) {
+						c++;
+					}
+					if (c == boundRight + 1) {
+						continue;
+					}
+					else if (m_fruit[line][c].m_type == fruit) {
+						m_fruit[line][col].m_type = -1;
+						if ((col - 1) >= boundLeft) {
+							m_fruit[line][col - 1].m_type = enemy;
+						}
+					}
+				}
+				else if (m_fruit[line][col].m_type == fruit) {
+					m_fruit[line][col].m_type = -1;
+					if ((col - 1) >= boundLeft) {
+						m_fruit[line][col - 1].m_type = fruit;
+					}
+				}
+			}
+		}
+	}
+
+	void update_boundaries()
+	{
+		int min_x{ 8 };
+		int max_x{ -1 };
+		int min_y{ 8 };
+		int max_y{ -1 };
+		for (int line{ boundTop }; line <= boundBottom; ++line)
+		{
+			for (int col{ boundLeft }; col <= boundRight; ++col)
+			{
+				int t{ m_fruit[line][col].m_type };
+				if (t != -1)
+				{
+					if (col < min_x) {
+						min_x = col;
+					}
+					if (col > max_x) {
+						max_x = col;
+					}
+					if (line > max_y) {
+						max_y = line;
+					}
+					if (line < min_y) {
+						min_y = line;
+					}
+				}
+			}
+		}
+		boundLeft = min_x;
+		boundRight = max_x;
+		boundTop = min_y;
+		boundBottom = max_y;
+	}
+
 	Tile m_tile[8][8];
 	Fruit m_fruit[8][8];
+	int boundLeft;
+	int boundRight;
+	int boundTop;
+	int boundBottom;
 };
 
 struct Game
@@ -157,6 +353,36 @@ struct Game
 		// set initial turn
 		std::uniform_int_distribution<> turn_gen(0, 1);
 		turn = turn_gen(gen);
+		
+		// winner
+		winner = -1;
+	}
+
+	void update_turn()
+	{
+		if (turn == 0) {
+			turn = 1;
+		}
+		else if(turn == 1) {
+			turn = 0;
+		}
+	}
+
+	bool someone_won()
+	{
+		int oc{ m_board.orange_count() };
+		int bc{ m_board.banane_count() };
+		if (oc == 0) {
+			winner = 1;
+			return true;
+		}
+		else if (bc == 0) {
+			winner = 0;
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 
 	std::shared_ptr<Player> m_player[2];
@@ -178,7 +404,7 @@ struct Game
 	int cardOwner[6] = { 0,0,0,1,1,1 }; // reference the index of the player in the m_player array
 	int turn{-1}; // reference the index of the player in the m_player array
 	int remaining_time[2] = {360, 360}; // in seconds (6 min)
-	int winner{-1};
+	int winner;
 };
 
 struct ClientMessage

@@ -61,9 +61,38 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			std::string chatMsg = header0 + header1 + chat;
 			std::shared_ptr<Game> game{player->m_game};
 			g_server_mutex.lock();
-			server.send_data(game->m_player[0]->m_peer, chatMsg);
-			server.send_data(game->m_player[1]->m_peer, chatMsg);
+			server.send_data(game->m_player[0]->m_peer, chatMsg); // to orange
+			server.send_data(game->m_player[1]->m_peer, chatMsg); // to banane
 			g_server_mutex.unlock();
+		}
+		else if (data[0] == 'm' && data[1] == 'v') // moving fruits
+		{
+			int dir{std::atoi(&data[3])};
+			std::shared_ptr<Game> game{ player->m_game };
+			int who{ (player == game->m_player[0]) ? 0 : 1 };
+			if (dir == 1) { game->m_board.update_up(who); }
+			else if (dir == 2) { game->m_board.update_down(who); }
+			else if (dir == 3) { game->m_board.update_right(who); }
+			else if (dir == 4) { game->m_board.update_left(who); }
+			game->m_board.update_boundaries();
+			game->m_board.print();
+			
+			std::string mv("mv:");
+			mv += std::to_string(dir) + ":" + std::to_string(who);
+			server.send_data(game->m_player[0]->m_peer, mv); // to orange
+			server.send_data(game->m_player[1]->m_peer, mv); // to banane
+			
+			if (game->someone_won()) {
+				std::string winner = std::to_string(game->winner);
+				server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
+				server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
+			}
+			else {
+				game->update_turn();
+				std::string next_turn("t:" + std::to_string(game->turn));
+				server.send_data(game->m_player[0]->m_peer, next_turn); // to orange
+				server.send_data(game->m_player[1]->m_peer, next_turn); // to banane
+			}
 		}
 	}
 }

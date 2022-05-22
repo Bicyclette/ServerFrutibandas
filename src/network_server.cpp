@@ -114,6 +114,7 @@ void NetworkServer::matchmaking()
 			m_game.push_back(std::make_shared<Game>(m_player[opponents[0]], m_player[opponents[1]]));
 			m_player[opponents[0]]->m_game = m_game[m_game.size()-1];
 			m_player[opponents[1]]->m_game = m_game[m_game.size()-1];
+			m_game[m_game.size() - 1]->m_board.print();
 			
 			// send initial game data (players name, players profile picture, game state)
 			std::string orange_data;
@@ -133,16 +134,18 @@ void NetworkServer::matchmaking()
 
 			// board
 			std::string board("");
-			for (int i{ 0 }; i < 8; ++i)
+			for (int line{ 0 }; line < 8; ++line)
 			{
-				for (int j{ 0 }; j < 8; ++j)
+				for (int col{ 0 }; col < 8; ++col)
 				{
-					int fruit = m_game[m_game.size() - 1]->m_board.m_fruit[j][i].m_type;
+					int fruit = m_game[m_game.size() - 1]->m_board.m_fruit[line][col].m_type;
 					board += std::to_string(fruit);
-					if ((i * 8 + j) < 63) {
+					if ((line * 8 + col) < 63) {
 						board += ".";
 					}
+					std::cout << fruit << ' ';
 				}
+				std::cout << std::endl;
 			}
 
 			// set of cards => orange
