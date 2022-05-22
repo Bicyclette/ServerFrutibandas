@@ -403,7 +403,7 @@ struct Game
 	std::array<int, 6> card = {-1,-1,-1,-1,-1,-1};
 	int cardOwner[6] = { 0,0,0,1,1,1 }; // reference the index of the player in the m_player array
 	int turn{-1}; // reference the index of the player in the m_player array
-	int remaining_time[2] = {360, 360}; // in seconds (6 min)
+	float remaining_time[2] = {600.0f, 600.0f}; // in seconds (6 min)
 	int winner;
 };
 

@@ -94,6 +94,37 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 				server.send_data(game->m_player[1]->m_peer, next_turn); // to banane
 			}
 		}
+		else if (data[0] == 'r' && data[1] == 't')
+		{
+			float remaining = std::stof(data.substr(3));
+			std::shared_ptr<Game> game{ player->m_game };
+			if (game->m_player[0] == player) {
+				game->remaining_time[0] = remaining;
+				if (remaining == 0.0f) {
+					game->winner = 1;
+					std::string winner = std::to_string(game->winner);
+					server.send_data(game->m_player[1]->m_peer, data); // to banane
+					server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
+					server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
+				}
+				else {
+					server.send_data(game->m_player[1]->m_peer, data); // to banane
+				}
+			}
+			else {
+				game->remaining_time[1] = remaining;
+				if (remaining == 0.0f) {
+					game->winner = 0;
+					std::string winner = std::to_string(game->winner);
+					server.send_data(game->m_player[0]->m_peer, data); // to orange
+					server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
+					server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
+				}
+				else {
+					server.send_data(game->m_player[0]->m_peer, data); // to orange
+				}
+			}
+		}
 	}
 }
 
