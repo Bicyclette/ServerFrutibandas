@@ -385,6 +385,58 @@ struct Game
 		}
 	}
 
+	void use_card(int card_id, int fruit, int line = -1, int col = -1)
+	{
+		// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> LOG
+		std::string card_name;
+		switch (card_id)
+		{
+		case 0:
+			card_name = "enclume";
+			break;
+		case 1:
+			card_name = "célérité";
+			break;
+		case 2:
+			card_name = "confiscation";
+			break;
+		case 3:
+			card_name = "renfort";
+			break;
+		case 4:
+			card_name = "désordre";
+			break;
+		case 5:
+			card_name = "pétrification";
+			break;
+		case 6:
+			card_name = "vachette";
+			break;
+		case 7:
+			card_name = "conversion";
+			break;
+		case 8:
+			card_name = "charge";
+			break;
+		case 9:
+			card_name = "entracte";
+			break;
+		case 10:
+			card_name = "solo";
+			break;
+		case 11:
+			card_name = "piège";
+			break;
+		};
+
+		if (fruit == 0) { std::cout << "orange played card " << card_name << std::endl; }
+		else { std::cout << "banana played card " << card_name << std::endl; }
+
+		// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< LOG
+
+
+	}
+
 	std::shared_ptr<Player> m_player[2];
 	Board m_board;
 	// -1 => undefined

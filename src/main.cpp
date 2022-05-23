@@ -125,6 +125,13 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 				}
 			}
 		}
+		else if (data[0] == 'c') // card chosen
+		{
+			std::shared_ptr<Game> game{ player->m_game };
+			int who{ (player == game->m_player[0]) ? 0 : 1 };
+			int card{std::atoi(data.substr(2).c_str())};
+			game->use_card(card, who);
+		}
 	}
 }
 
