@@ -89,7 +89,9 @@ struct Board
 		boundBottom(7),
 		m_charge(false),
 		m_solo(false),
-		m_solo_location(-1,-1)
+		m_solo_location(-1,-1),
+		m_invert_next_move(false),
+		m_invert_next_move_team(-1)
 	{}
 
 	int orange_count()
@@ -135,6 +137,11 @@ struct Board
 
 	void update_up(int fruit)
 	{
+		if (m_invert_next_move_team == fruit) {
+			m_invert_next_move = false;
+			m_invert_next_move_team = -1;
+			update_down(fruit);
+		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -199,6 +206,11 @@ struct Board
 
 	void update_down(int fruit)
 	{
+		if (m_invert_next_move_team == fruit) {
+			m_invert_next_move = false;
+			m_invert_next_move_team = -1;
+			update_up(fruit);
+		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -263,6 +275,11 @@ struct Board
 
 	void update_right(int fruit)
 	{
+		if (m_invert_next_move_team == fruit) {
+			m_invert_next_move = false;
+			m_invert_next_move_team = -1;
+			update_left(fruit);
+		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -327,6 +344,11 @@ struct Board
 
 	void update_left(int fruit)
 	{
+		if (m_invert_next_move_team == fruit) {
+			m_invert_next_move = false;
+			m_invert_next_move_team = -1;
+			update_right(fruit);
+		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -433,6 +455,8 @@ struct Board
 	bool m_solo;
 	glm::ivec2 m_solo_location;
 	bool m_charge;
+	bool m_invert_next_move;
+	int m_invert_next_move_team;
 };
 
 struct Game
@@ -538,7 +562,8 @@ struct Game
 		}
 		else if (card_id == 4) // désordre
 		{
-			//m_invert_next_move = true;
+			m_board.m_invert_next_move = true;
+			m_board.m_invert_next_move_team = (fruit == 0) ? 1 : 0;
 		}
 		else if (card_id == 5) // pétrification
 		{
