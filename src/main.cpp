@@ -70,28 +70,74 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			int dir{std::atoi(&data[3])};
 			std::shared_ptr<Game> game{ player->m_game };
 			int who{ (player == game->m_player[0]) ? 0 : 1 };
-			if (dir == 1) { game->m_board.update_up(who); }
-			else if (dir == 2) { game->m_board.update_down(who); }
-			else if (dir == 3) { game->m_board.update_right(who); }
-			else if (dir == 4) { game->m_board.update_left(who); }
+			if (dir == 1)
+			{
+				if (game->m_board.m_charge) {
+					game->m_board.update_up(who);
+					game->m_board.update_up(who);
+					game->m_board.m_charge = false;
+				}
+				else {
+					game->m_board.update_up(who);
+				}
+			}
+			else if (dir == 2)
+			{
+				if (game->m_board.m_charge) {
+					game->m_board.update_down(who);
+					game->m_board.update_down(who);
+					game->m_board.m_charge = false;
+				}
+				else {
+					game->m_board.update_down(who);
+				}
+			}
+			else if (dir == 3)
+			{
+				if (game->m_board.m_charge) {
+					game->m_board.update_right(who);
+					game->m_board.update_right(who);
+					game->m_board.m_charge = false;
+				}
+				else {
+					game->m_board.update_right(who);
+				}
+			}
+			else if (dir == 4)
+			{
+				if (game->m_board.m_charge) {
+					game->m_board.update_left(who);
+					game->m_board.update_left(who);
+					game->m_board.m_charge = false;
+				}
+				else {
+					game->m_board.update_left(who);
+				}
+			}
 			game->m_board.update_boundaries();
 			game->m_board.print();
 			
 			std::string mv("mv:");
 			mv += std::to_string(dir) + ":" + std::to_string(who);
+			g_server_mutex.lock();
 			server.send_data(game->m_player[0]->m_peer, mv); // to orange
 			server.send_data(game->m_player[1]->m_peer, mv); // to banane
-			
+			g_server_mutex.unlock();
+
 			if (game->someone_won()) {
 				std::string winner = std::to_string(game->winner);
+				g_server_mutex.lock();
 				server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
 				server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
+				g_server_mutex.unlock();
 			}
 			else {
 				game->update_turn();
 				std::string next_turn("t:" + std::to_string(game->turn));
+				g_server_mutex.lock();
 				server.send_data(game->m_player[0]->m_peer, next_turn); // to orange
 				server.send_data(game->m_player[1]->m_peer, next_turn); // to banane
+				g_server_mutex.unlock();
 			}
 		}
 		else if (data[0] == 'r' && data[1] == 't')
@@ -103,12 +149,16 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 				if (remaining == 0.0f) {
 					game->winner = 1;
 					std::string winner = std::to_string(game->winner);
+					g_server_mutex.lock();
 					server.send_data(game->m_player[1]->m_peer, data); // to banane
 					server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
 					server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
+					g_server_mutex.unlock();
 				}
 				else {
+					g_server_mutex.lock();
 					server.send_data(game->m_player[1]->m_peer, data); // to banane
+					g_server_mutex.unlock();
 				}
 			}
 			else {
@@ -116,12 +166,16 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 				if (remaining == 0.0f) {
 					game->winner = 0;
 					std::string winner = std::to_string(game->winner);
+					g_server_mutex.lock();
 					server.send_data(game->m_player[0]->m_peer, data); // to orange
 					server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
 					server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
+					g_server_mutex.unlock();
 				}
 				else {
+					g_server_mutex.lock();
 					server.send_data(game->m_player[0]->m_peer, data); // to orange
+					g_server_mutex.unlock();
 				}
 			}
 		}
@@ -129,8 +183,80 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 		{
 			std::shared_ptr<Game> game{ player->m_game };
 			int who{ (player == game->m_player[0]) ? 0 : 1 };
-			int card{std::atoi(data.substr(2).c_str())};
-			game->use_card(card, who);
+			std::istringstream card_stream(data);
+			std::vector<int> info;
+			std::string element;
+			while (getline(card_stream, element, ':'))
+			{
+				info.push_back(std::atoi(element.c_str()));
+			}
+			game->use_card(info[1], who, info[2], info[3]);
+
+			// notify enemy of the played card
+			int to = (who == 0) ? 1 : 0;
+			int card_id = info[1];
+			if (card_id == 0) // enclume
+			{
+
+			}
+			else if (card_id == 1) // célérité
+			{
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
+			}
+			else if (card_id == 2) // confiscation
+			{
+				
+			}
+			else if (card_id == 3) // renfort
+			{
+				
+
+			}
+			else if (card_id == 4) // désordre
+			{
+				
+			}
+			else if (card_id == 5) // pétrification
+			{
+				
+			}
+			else if (card_id == 6) // vachette
+			{
+				
+			}
+			else if (card_id == 7) // conversion
+			{
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
+			}
+			else if (card_id == 8) // charge
+			{
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
+			}
+			else if (card_id == 9) // entracte
+			{
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				std::string next_turn("t:" + std::to_string(game->turn));
+				server.send_data(game->m_player[0]->m_peer, next_turn); // to orange
+				server.send_data(game->m_player[1]->m_peer, next_turn); // to banane
+				g_server_mutex.unlock();
+			}
+			else if (card_id == 10) // solo
+			{
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
+			}
+			else if (card_id == 11) // piège
+			{
+				
+			}
 		}
 	}
 }
