@@ -150,19 +150,19 @@ struct Board
 			int y = m_solo_location[1];
 			// find first gap
 			int line;
-			for (line = y; line >= boundTop; --line)
+			for (line = y; line > boundTop; --line)
 			{
-				if (m_fruit[line][x].m_type == -1) {
+				if (m_fruit[line][x].m_type == -1 || m_fruit[line][x].m_type == -2) {
 					break;
 				}
 			}
-			if (m_fruit[line][x].m_type == -1)
+			if (m_fruit[line][x].m_type == -1 || m_fruit[line][x].m_type == -2)
 			{
 				line++;
 			}
 			for (; line <= y; ++line)
 			{
-				if (line - 1 >= boundTop) {
+				if (line - 1 >= boundTop && m_fruit[line - 1][x].m_type != -2) {
 					m_fruit[line - 1][x].m_type = m_fruit[line][x].m_type;
 				}
 				m_fruit[line][x].m_type = -1;
@@ -180,22 +180,22 @@ struct Board
 					if (m_fruit[line][col].m_type == enemy) {
 						//check if there is a pusher down the column
 						int l{ line };
-						while (m_fruit[l][col].m_type == enemy && l <= boundBottom) {
+						while (l <= boundBottom && m_fruit[l][col].m_type == enemy) {
 							l++;
 						}
-						if (l == boundBottom + 1) {
+						if (l == boundBottom + 1 || m_fruit[l][col].m_type == -2) {
 							continue;
 						}
 						else if (m_fruit[l][col].m_type == fruit) {
 							m_fruit[line][col].m_type = -1;
-							if ((line - 1) >= boundTop) {
+							if ((line - 1) >= boundTop && m_fruit[line - 1][col].m_type != -2) {
 								m_fruit[line - 1][col].m_type = enemy;
 							}
 						}
 					}
 					else if (m_fruit[line][col].m_type == fruit) {
 						m_fruit[line][col].m_type = -1;
-						if ((line - 1) >= boundTop) {
+						if ((line - 1) >= boundTop && m_fruit[line - 1][col].m_type != -2) {
 							m_fruit[line - 1][col].m_type = fruit;
 						}
 					}
@@ -219,19 +219,19 @@ struct Board
 			int y = m_solo_location[1];
 			// find first gap
 			int line;
-			for (line = y; line <= boundBottom; ++line)
+			for (line = y; line < boundBottom; ++line)
 			{
-				if (m_fruit[line][x].m_type == -1) {
+				if (m_fruit[line][x].m_type == -1 || m_fruit[line][x].m_type == -2) {
 					break;
 				}
 			}
-			if (m_fruit[line][x].m_type == -1)
+			if (m_fruit[line][x].m_type == -1 || m_fruit[line][x].m_type == -2)
 			{
 				line--;
 			}
 			for (; line >= y; --line)
 			{
-				if (line + 1 <= boundBottom) {
+				if (line + 1 <= boundBottom && m_fruit[line + 1][x].m_type != -2) {
 					m_fruit[line + 1][x].m_type = m_fruit[line][x].m_type;
 				}
 				m_fruit[line][x].m_type = -1;
@@ -249,22 +249,22 @@ struct Board
 					if (m_fruit[line][col].m_type == enemy) {
 						//check if there is a pusher up the column
 						int l{ line };
-						while (m_fruit[l][col].m_type == enemy && l >= boundTop) {
+						while (l >= boundTop && m_fruit[l][col].m_type == enemy) {
 							l--;
 						}
-						if (l == boundTop - 1) {
+						if (l == (boundTop - 1)) {
 							continue;
 						}
 						else if (m_fruit[l][col].m_type == fruit) {
 							m_fruit[line][col].m_type = -1;
-							if ((line + 1) <= boundBottom) {
+							if ((line + 1) <= boundBottom && m_fruit[line + 1][col].m_type != -2) {
 								m_fruit[line + 1][col].m_type = enemy;
 							}
 						}
 					}
 					else if (m_fruit[line][col].m_type == fruit) {
 						m_fruit[line][col].m_type = -1;
-						if ((line + 1) <= boundBottom) {
+						if ((line + 1) <= boundBottom && m_fruit[line + 1][col].m_type != -2) {
 							m_fruit[line + 1][col].m_type = fruit;
 						}
 					}
@@ -288,24 +288,23 @@ struct Board
 			int y = m_solo_location[1];
 			// find first gap
 			int col;
-			for (col = x; col <= boundRight; ++col)
+			for (col = x; col < boundRight; ++col)
 			{
-				if (m_fruit[y][col].m_type == -1) {
+				if (m_fruit[y][col].m_type == -1 || m_fruit[y][col].m_type == -2) {
 					break;
 				}
 			}
-			if (m_fruit[y][col].m_type == -1)
+			if (m_fruit[y][col].m_type == -1 || m_fruit[y][col].m_type == -2)
 			{
 				col--;
 			}
 			for (; col >= x; --col)
 			{
-				if (col + 1 <= boundRight) {
+				if (col + 1 <= boundRight && m_fruit[y][col + 1].m_type != -2) {
 					m_fruit[y][col + 1].m_type = m_fruit[y][col].m_type;
 				}
 				m_fruit[y][col].m_type = -1;
 			}
-			m_solo = false;
 			m_solo_location[0] = -1;
 			m_solo_location[1] = -1;
 		}
@@ -318,7 +317,7 @@ struct Board
 					if (m_fruit[line][col].m_type == enemy) {
 						//check if there is a pusher on the left side of the line
 						int c{ col };
-						while (m_fruit[line][c].m_type == enemy && c >= boundLeft) {
+						while (c >= boundLeft && m_fruit[line][c].m_type == enemy) {
 							c--;
 						}
 						if (c == boundLeft - 1) {
@@ -326,14 +325,14 @@ struct Board
 						}
 						else if (m_fruit[line][c].m_type == fruit) {
 							m_fruit[line][col].m_type = -1;
-							if ((col + 1) <= boundRight) {
+							if ((col + 1) <= boundRight && m_fruit[line][col + 1].m_type != -2) {
 								m_fruit[line][col + 1].m_type = enemy;
 							}
 						}
 					}
 					else if (m_fruit[line][col].m_type == fruit) {
 						m_fruit[line][col].m_type = -1;
-						if ((col + 1) <= boundRight) {
+						if ((col + 1) <= boundRight && m_fruit[line][col + 1].m_type != -2) {
 							m_fruit[line][col + 1].m_type = fruit;
 						}
 					}
@@ -357,24 +356,23 @@ struct Board
 			int y = m_solo_location[1];
 			// find first gap
 			int col;
-			for (col = x; col >= boundLeft; --col)
+			for (col = x; col > boundLeft; --col)
 			{
-				if (m_fruit[y][col].m_type == -1) {
+				if (m_fruit[y][col].m_type == -1 || m_fruit[y][col].m_type == -2) {
 					break;
 				}
 			}
-			if (m_fruit[y][col].m_type == -1)
+			if (m_fruit[y][col].m_type == -1 || m_fruit[y][col].m_type == -2)
 			{
 				col++;
 			}
 			for (; col <= x; ++col)
 			{
-				if (col - 1 >= boundLeft) {
+				if (col - 1 >= boundLeft && m_fruit[y][col - 1].m_type != -2) {
 					m_fruit[y][col - 1].m_type = m_fruit[y][col].m_type;
 				}
 				m_fruit[y][col].m_type = -1;
 			}
-			m_solo = false;
 			m_solo_location[0] = -1;
 			m_solo_location[1] = -1;
 		}
@@ -387,7 +385,7 @@ struct Board
 					if (m_fruit[line][col].m_type == enemy) {
 						//check if there is a pusher on the right side of the line
 						int c{ col };
-						while (m_fruit[line][c].m_type == enemy && c <= boundRight) {
+						while (c <= boundRight && m_fruit[line][c].m_type == enemy) {
 							c++;
 						}
 						if (c == boundRight + 1) {
@@ -395,14 +393,14 @@ struct Board
 						}
 						else if (m_fruit[line][c].m_type == fruit) {
 							m_fruit[line][col].m_type = -1;
-							if ((col - 1) >= boundLeft) {
+							if ((col - 1) >= boundLeft && m_fruit[line][col - 1].m_type != -2) {
 								m_fruit[line][col - 1].m_type = enemy;
 							}
 						}
 					}
 					else if (m_fruit[line][col].m_type == fruit) {
 						m_fruit[line][col].m_type = -1;
-						if ((col - 1) >= boundLeft) {
+						if ((col - 1) >= boundLeft && m_fruit[line][col - 1].m_type != -2) {
 							m_fruit[line][col - 1].m_type = fruit;
 						}
 					}
@@ -422,7 +420,7 @@ struct Board
 			for (int col{ boundLeft }; col <= boundRight; ++col)
 			{
 				int t{ m_fruit[line][col].m_type };
-				if (t != -1)
+				if (t != -1 && t != -2)
 				{
 					if (col < min_x) {
 						min_x = col;
@@ -443,6 +441,10 @@ struct Board
 		boundRight = max_x;
 		boundTop = min_y;
 		boundBottom = max_y;
+		std::cout << "bound Left = " << boundLeft << std::endl;
+		std::cout << "bound Right = " << boundRight << std::endl;
+		std::cout << "bound Top = " << boundTop << std::endl;
+		std::cout << "bound Bottom = " << boundBottom << std::endl;
 	}
 
 	Tile m_tile[8][8];
@@ -504,7 +506,8 @@ struct Game
 			} while (std::count(card.begin(), card.end(), card_id) > 0);
 			card[i] = card_id;
 		}
-		card[0] = 4;
+		card[3] = 0;
+
 		// set initial turn
 		std::uniform_int_distribution<> turn_gen(0, 1);
 		turn = turn_gen(gen);
@@ -544,7 +547,8 @@ struct Game
 	{
 		if (card_id == 0) // enclume
 		{
-
+			m_board.m_fruit[line][col].m_type = -2;
+			m_board.m_tile[line][col].m_alive = false;
 		}
 		else if (card_id == 1) // célérité
 		{

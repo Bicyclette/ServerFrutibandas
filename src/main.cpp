@@ -202,7 +202,9 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			int card_id = info[1];
 			if (card_id == 0) // enclume
 			{
-
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
 			}
 			else if (card_id == 1) // célérité
 			{
