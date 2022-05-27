@@ -47,7 +47,6 @@ void NetworkServer::run()
 			else if (m_event.type == ENET_EVENT_TYPE_RECEIVE)
 			{
 				std::string message(reinterpret_cast<char*>(m_event.packet->data));
-				std::cout << message << std::endl;
 				for (int i{ 0 }; i < m_player.size(); ++i)
 				{
 					auto& p{ m_player[i] };

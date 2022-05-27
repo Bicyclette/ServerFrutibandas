@@ -135,12 +135,12 @@ struct Board
 		}
 	}
 
-	void update_up(int fruit)
+	void update_up(int fruit, bool redirected = false)
 	{
-		if (m_invert_next_move_team == fruit) {
-			m_invert_next_move = false;
-			m_invert_next_move_team = -1;
-			update_down(fruit);
+		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
+			update_down(fruit, true);
+			std::cout << "up inverted to down\n";
+			return;
 		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
@@ -204,12 +204,12 @@ struct Board
 		}
 	}
 
-	void update_down(int fruit)
+	void update_down(int fruit, bool redirected = false)
 	{
-		if (m_invert_next_move_team == fruit) {
-			m_invert_next_move = false;
-			m_invert_next_move_team = -1;
-			update_up(fruit);
+		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
+			update_up(fruit, true);
+			std::cout << "down inverted to up\n";
+			return;
 		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
@@ -273,12 +273,12 @@ struct Board
 		}
 	}
 
-	void update_right(int fruit)
+	void update_right(int fruit, bool redirected = false)
 	{
-		if (m_invert_next_move_team == fruit) {
-			m_invert_next_move = false;
-			m_invert_next_move_team = -1;
-			update_left(fruit);
+		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
+			update_left(fruit, true);
+			std::cout << "right inverted to left\n";
+			return;
 		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
@@ -342,12 +342,12 @@ struct Board
 		}
 	}
 
-	void update_left(int fruit)
+	void update_left(int fruit, bool redirected = false)
 	{
-		if (m_invert_next_move_team == fruit) {
-			m_invert_next_move = false;
-			m_invert_next_move_team = -1;
-			update_right(fruit);
+		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
+			update_right(fruit, true);
+			std::cout << "left inverted to right\n";
+			return;
 		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
@@ -504,7 +504,7 @@ struct Game
 			} while (std::count(card.begin(), card.end(), card_id) > 0);
 			card[i] = card_id;
 		}
-
+		card[0] = 4;
 		// set initial turn
 		std::uniform_int_distribution<> turn_gen(0, 1);
 		turn = turn_gen(gen);
@@ -562,6 +562,7 @@ struct Game
 		}
 		else if (card_id == 4) // désordre
 		{
+			std::cout << "inverted next move ON" << std::endl;
 			m_board.m_invert_next_move = true;
 			m_board.m_invert_next_move_team = (fruit == 0) ? 1 : 0;
 		}

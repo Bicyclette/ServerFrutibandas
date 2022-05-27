@@ -114,6 +114,11 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 					game->m_board.update_left(who);
 				}
 			}
+			std::cout << "update done" << std::endl;
+			if (game->m_board.m_invert_next_move && who == game->m_board.m_invert_next_move_team) {
+				game->m_board.m_invert_next_move = false;
+				game->m_board.m_invert_next_move_team = -1;
+			}
 			game->m_board.update_boundaries();
 			game->m_board.print();
 			
@@ -216,7 +221,9 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			}
 			else if (card_id == 4) // désordre
 			{
-				
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
 			}
 			else if (card_id == 5) // pétrification
 			{
