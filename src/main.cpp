@@ -52,6 +52,15 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 		}
 		else if (data[0] == 'g' && data[1] == 'c') // game chat
 		{
+			// check if the player sending a message is in game
+			player->in_game_mtx.lock();
+			bool in_game = player->m_in_game;
+			player->in_game_mtx.unlock();
+			if (!in_game) { continue; }
+
+			std::shared_ptr<Game> game{ player->m_game };
+			int who{ (player == game->m_player[0]) ? 0 : 1 };
+
 			std::string header0("gc:");
 			std::string chat;
 			chat += player->m_name;
@@ -59,7 +68,6 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			chat += data.substr(3);
 			std::string header1(std::to_string(data.substr(3).size()) + ":");
 			std::string chatMsg = header0 + header1 + chat;
-			std::shared_ptr<Game> game{player->m_game};
 			g_server_mutex.lock();
 			server.send_data(game->m_player[0]->m_peer, chatMsg); // to orange
 			server.send_data(game->m_player[1]->m_peer, chatMsg); // to banane
@@ -67,9 +75,16 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 		}
 		else if (data[0] == 'm' && data[1] == 'v') // moving fruits
 		{
-			int dir{std::atoi(&data[3])};
+			// check if the player sending a message is in game
+			player->in_game_mtx.lock();
+			bool in_game = player->m_in_game;
+			player->in_game_mtx.unlock();
+			if (!in_game) { continue; }
+
 			std::shared_ptr<Game> game{ player->m_game };
 			int who{ (player == game->m_player[0]) ? 0 : 1 };
+
+			int dir{std::atoi(&data[3])};
 			if (dir == 1)
 			{
 				if (game->m_board.m_charge) {
@@ -143,6 +158,7 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 				game->turn_mtx.unlock();
 				std::string next_turn("t:" + std::to_string(turn));
 				g_server_mutex.lock();
+				std::cout << "send next turn = " << turn << " to both players" << std::endl;
 				server.send_data(game->m_player[0]->m_peer, next_turn); // to orange
 				server.send_data(game->m_player[1]->m_peer, next_turn); // to banane
 				g_server_mutex.unlock();
@@ -150,8 +166,16 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 		}
 		else if (data[0] == 'r' && data[1] == 't')
 		{
-			float remaining = std::stof(data.substr(3));
+			// check if the player sending a message is in game
+			player->in_game_mtx.lock();
+			bool in_game = player->m_in_game;
+			player->in_game_mtx.unlock();
+			if (!in_game) { continue; }
+			
 			std::shared_ptr<Game> game{ player->m_game };
+			int who{ (player == game->m_player[0]) ? 0 : 1 };
+
+			float remaining = std::stof(data.substr(3));
 			if (game->m_player[0] == player) {
 				game->remaining_time[0] = remaining;
 				if (remaining == 0.0f) {
@@ -189,8 +213,15 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 		}
 		else if (data[0] == 'c') // card chosen
 		{
+			// check if the player sending a message is in game
+			player->in_game_mtx.lock();
+			bool in_game = player->m_in_game;
+			player->in_game_mtx.unlock();
+			if (!in_game) { continue; }
+			
 			std::shared_ptr<Game> game{ player->m_game };
 			int who{ (player == game->m_player[0]) ? 0 : 1 };
+			
 			std::istringstream card_stream(data);
 			std::vector<int> info;
 			std::string element;
@@ -274,8 +305,62 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			}
 			else if (card_id == 11) // piège
 			{
-				
+				g_server_mutex.lock();
+				server.send_data(game->m_player[to]->m_peer, data);
+				g_server_mutex.unlock();
 			}
+		}
+		else if (data[0] == 'g' && data[1] == 'u') // give up
+		{
+			// check if the player sending a message is in game
+			player->in_game_mtx.lock();
+			bool in_game = player->m_in_game;
+			player->in_game_mtx.unlock();
+			if (!in_game) { continue; }
+
+			std::shared_ptr<Game> game{ player->m_game };
+			int who{ (player == game->m_player[0]) ? 0 : 1 };
+			int to = (who == 0) ? 1 : 0;
+			std::string gu_data = "gu:" + game->m_player[who]->m_name;
+			
+			// notify opponent
+			g_server_mutex.lock();
+			server.send_data(game->m_player[to]->m_peer, gu_data);
+			g_server_mutex.unlock();
+		}
+		else if (data[0] == 'l' && data[1] == 'e' && data[2] == 'a' && data[3] == 'v' && data[4] == 'e') // a player gave up the game, and the other one left the game in consequence
+		{
+		std::cout << "check if leaving player is in game" << std::endl;
+			// check if the player sending a message is in game
+			player->in_game_mtx.lock();
+			bool in_game = player->m_in_game;
+			player->in_game_mtx.unlock();
+			if (!in_game) { continue; }
+			std::cout << "check if leaving player is in game (ALL GOOD)" << std::endl;
+
+			
+			// both players are no longer in game
+			std::shared_ptr<Game> game{ player->m_game };
+			game->m_player[0]->in_game_mtx.lock();
+			game->m_player[0]->m_in_game = false;
+			game->m_player[0]->in_game_mtx.unlock();
+			game->m_player[1]->in_game_mtx.lock();
+			game->m_player[1]->m_in_game = false;
+			game->m_player[1]->in_game_mtx.unlock();
+
+			// delete game instance
+			g_server_mutex.lock();
+			int num_games = server.m_game.size();
+			for (int i = 0; i < num_games; ++i)
+			{
+				std::shared_ptr<Game> g{ server.m_game[i] };
+				if (game == g) {
+					server.m_game.erase(server.m_game.begin() + i);
+					std::cout << "game instance erased" << std::endl;
+					break;
+				}
+			}
+			g_server_mutex.unlock();
 		}
 	}
 }

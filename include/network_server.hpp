@@ -59,6 +59,7 @@ struct Player
 	ENetPeer* m_peer;
 	bool m_in_queue;
 	bool m_in_game;
+	std::mutex in_game_mtx;
 };
 
 struct Fruit
@@ -711,6 +712,9 @@ class NetworkServer
 		ENetHost* m_server;
 		ENetEvent m_event;
 		std::vector<std::shared_ptr<Player>> m_player;
+
+	public:
+
 		std::vector<std::shared_ptr<Game>> m_game;
 };
 
