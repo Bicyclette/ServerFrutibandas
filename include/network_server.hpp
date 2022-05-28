@@ -89,9 +89,7 @@ struct Board
 		boundBottom(7),
 		m_charge(false),
 		m_solo(false),
-		m_solo_location(-1,-1),
-		m_invert_next_move(false),
-		m_invert_next_move_team(-1)
+		m_solo_location(-1,-1)
 	{}
 
 	int orange_count()
@@ -118,9 +116,9 @@ struct Board
 
 	void print()
 	{
-		for (int line{ 0 }; line < 8; ++line)
+		for (int line{ boundTop }; line <= boundBottom; ++line)
 		{
-			for (int col{ 0 }; col < 8; ++col)
+			for (int col{ boundLeft }; col <= boundRight; ++col)
 			{
 				int t = m_fruit[line][col].m_type;
 				if (t > -1) {
@@ -135,13 +133,8 @@ struct Board
 		}
 	}
 
-	void update_up(int fruit, bool redirected = false)
+	void update_up(int fruit)
 	{
-		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
-			update_down(fruit, true);
-			std::cout << "up inverted to down\n";
-			return;
-		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -204,13 +197,8 @@ struct Board
 		}
 	}
 
-	void update_down(int fruit, bool redirected = false)
+	void update_down(int fruit)
 	{
-		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
-			update_up(fruit, true);
-			std::cout << "down inverted to up\n";
-			return;
-		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -273,13 +261,8 @@ struct Board
 		}
 	}
 
-	void update_right(int fruit, bool redirected = false)
+	void update_right(int fruit)
 	{
-		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
-			update_left(fruit, true);
-			std::cout << "right inverted to left\n";
-			return;
-		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -305,6 +288,7 @@ struct Board
 				}
 				m_fruit[y][col].m_type = -1;
 			}
+			m_solo = false;
 			m_solo_location[0] = -1;
 			m_solo_location[1] = -1;
 		}
@@ -341,13 +325,8 @@ struct Board
 		}
 	}
 
-	void update_left(int fruit, bool redirected = false)
+	void update_left(int fruit)
 	{
-		if (m_invert_next_move && m_invert_next_move_team == fruit && !redirected) {
-			update_right(fruit, true);
-			std::cout << "left inverted to right\n";
-			return;
-		}
 		int enemy = (fruit == 0) ? 1 : 0;
 
 		if (m_solo)
@@ -373,6 +352,7 @@ struct Board
 				}
 				m_fruit[y][col].m_type = -1;
 			}
+			m_solo = false;
 			m_solo_location[0] = -1;
 			m_solo_location[1] = -1;
 		}
@@ -457,8 +437,6 @@ struct Board
 	bool m_solo;
 	glm::ivec2 m_solo_location;
 	bool m_charge;
-	bool m_invert_next_move;
-	int m_invert_next_move_team;
 };
 
 struct Game
@@ -506,7 +484,6 @@ struct Game
 			} while (std::count(card.begin(), card.end(), card_id) > 0);
 			card[i] = card_id;
 		}
-		card[3] = 0;
 
 		// set initial turn
 		std::uniform_int_distribution<> turn_gen(0, 1);
@@ -625,8 +602,7 @@ struct Game
 		}
 		else if (card_id == 4) // désordre
 		{
-			m_board.m_invert_next_move = true;
-			m_board.m_invert_next_move_team = (fruit == 0) ? 1 : 0;
+			
 		}
 		else if (card_id == 5) // pétrification
 		{
@@ -665,6 +641,9 @@ struct Game
 		{
 			//m_board.m_tile[line][col].m_trap = true;
 		}
+		m_board.print();
+		std::cout << "oranges = " << m_board.orange_count() << std::endl;
+		std::cout << "bananes = " << m_board.banane_count() << std::endl;
 	}
 
 	std::shared_ptr<Player> m_player[2];
