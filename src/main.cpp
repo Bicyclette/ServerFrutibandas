@@ -114,7 +114,6 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 					game->m_board.update_left(who);
 				}
 			}
-			std::cout << "update done" << std::endl;
 			if (game->m_board.m_invert_next_move && who == game->m_board.m_invert_next_move_team) {
 				game->m_board.m_invert_next_move = false;
 				game->m_board.m_invert_next_move_team = -1;
@@ -130,7 +129,10 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			g_server_mutex.unlock();
 
 			if (game->someone_won()) {
-				std::string winner = std::to_string(game->winner);
+				game->winner_mtx.lock();
+				int game_winner = game->winner;
+				game->winner_mtx.unlock();
+				std::string winner = std::to_string(game_winner);
 				g_server_mutex.lock();
 				server.send_data(game->m_player[0]->m_peer, "win:" + winner); // to orange
 				server.send_data(game->m_player[1]->m_peer, "win:" + winner); // to banane
@@ -138,7 +140,10 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			}
 			else {
 				game->update_turn();
-				std::string next_turn("t:" + std::to_string(game->turn));
+				game->turn_mtx.lock();
+				int turn = game->turn;
+				game->turn_mtx.unlock();
+				std::string next_turn("t:" + std::to_string(turn));
 				g_server_mutex.lock();
 				server.send_data(game->m_player[0]->m_peer, next_turn); // to orange
 				server.send_data(game->m_player[1]->m_peer, next_turn); // to banane
@@ -218,8 +223,12 @@ void message_processing(int tid, bool& server_on, NetworkServer& server)
 			}
 			else if (card_id == 3) // renfort
 			{
-				
-
+				std::string renfort = data + ":" + game->m_renfort + ":" + std::to_string(who);
+				game->m_renfort.clear();
+				g_server_mutex.lock();
+				server.send_data(game->m_player[who]->m_peer, renfort);
+				server.send_data(game->m_player[to]->m_peer, renfort);
+				g_server_mutex.unlock();
 			}
 			else if (card_id == 4) // désordre
 			{

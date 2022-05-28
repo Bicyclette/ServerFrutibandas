@@ -518,12 +518,14 @@ struct Game
 
 	void update_turn()
 	{
+		turn_mtx.lock();
 		if (turn == 0) {
 			turn = 1;
 		}
 		else if(turn == 1) {
 			turn = 0;
 		}
+		turn_mtx.unlock();
 	}
 
 	bool someone_won()
@@ -562,11 +564,67 @@ struct Game
 		else if (card_id == 3) // renfort
 		{
 			// generate three fruits on empty tiles
-
+			std::vector<glm::ivec2> free_pos;
+			for (int line{ m_board.boundTop }; line <= m_board.boundBottom; ++line)
+			{
+				for (int col{ m_board.boundLeft }; col <= m_board.boundRight; ++col)
+				{
+					if (m_board.m_fruit[line][col].m_type == -1) {
+						free_pos.push_back(glm::ivec2(line, col));
+					}
+				}
+			}
+			if (free_pos.size() == 0) {
+				m_renfort = "0:-1:-1:-1:-1:-1:-1";
+			}
+			else if (free_pos.size() == 1) {
+				std::string pos1_line = std::to_string(free_pos[0][0]);
+				std::string pos1_col = std::to_string(free_pos[0][1]);
+				m_renfort = "1:" + pos1_line + ":" + pos1_col + ":-1:-1:-1:-1";
+				// update board
+				m_board.m_fruit[free_pos[0][0]][free_pos[0][1]].m_type = fruit;
+			}
+			else if (free_pos.size() == 2) {
+				std::string pos1_line = std::to_string(free_pos[0][0]);
+				std::string pos1_col = std::to_string(free_pos[0][1]);
+				std::string pos2_line = std::to_string(free_pos[1][0]);
+				std::string pos2_col = std::to_string(free_pos[1][1]);
+				m_renfort = "2:" + pos1_line + ":" + pos1_col + ":" + pos2_line + ":" + pos2_col + ":-1:-1";
+				// update board
+				m_board.m_fruit[free_pos[0][0]][free_pos[0][1]].m_type = fruit;
+				m_board.m_fruit[free_pos[1][0]][free_pos[1][1]].m_type = fruit;
+			}
+			else if (free_pos.size() == 3) {
+				std::string pos1_line = std::to_string(free_pos[0][0]);
+				std::string pos1_col = std::to_string(free_pos[0][1]);
+				std::string pos2_line = std::to_string(free_pos[1][0]);
+				std::string pos2_col = std::to_string(free_pos[1][1]);
+				std::string pos3_line = std::to_string(free_pos[2][0]);
+				std::string pos3_col = std::to_string(free_pos[2][1]);
+				m_renfort = "3:" + pos1_line + ":" + pos1_col + ":" + pos2_line + ":" + pos2_col + ":" + pos3_line + ":" + pos3_col;
+				// update board
+				m_board.m_fruit[free_pos[0][0]][free_pos[0][1]].m_type = fruit;
+				m_board.m_fruit[free_pos[1][0]][free_pos[1][1]].m_type = fruit;
+				m_board.m_fruit[free_pos[2][0]][free_pos[2][1]].m_type = fruit;
+			}
+			else {
+				std::random_device rd;
+				std::mt19937 gen(rd());
+				m_renfort += "3";
+				for (int i{ 0 }; i < 3; ++i) {
+					std::uniform_int_distribution<> rand_gen(0, free_pos.size()-1);
+					int index = rand_gen(gen);
+					std::string pos_line = std::to_string(free_pos[index][0]);
+					std::string pos_col = std::to_string(free_pos[index][1]);
+					free_pos.erase(free_pos.begin() + index);
+					m_renfort += ":" + pos_line + ":" + pos_col;
+					// update board
+					m_board.m_fruit[free_pos[index][0]][free_pos[index][1]].m_type = fruit;
+				}
+			}
 		}
 		else if (card_id == 4) // désordre
 		{
-			std::cout << "inverted next move ON" << std::endl;
 			m_board.m_invert_next_move = true;
 			m_board.m_invert_next_move_team = (fruit == 0) ? 1 : 0;
 		}
@@ -596,8 +654,12 @@ struct Game
 		}
 		else if (card_id == 10) // solo
 		{
+			solo_mtx.lock();
 			m_board.m_solo = true;
+			solo_mtx.unlock();
+			solo_location_mtx.lock();
 			m_board.m_solo_location = glm::ivec2(col, line);
+			solo_location_mtx.unlock();
 		}
 		else if (card_id == 11) // piège
 		{
@@ -623,8 +685,16 @@ struct Game
 	std::array<int, 6> card = {-1,-1,-1,-1,-1,-1};
 	int cardOwner[6] = { 0,0,0,1,1,1 }; // reference the index of the player in the m_player array
 	int turn{-1}; // reference the index of the player in the m_player array
-	float remaining_time[2] = {600.0f, 600.0f}; // in seconds (6 min)
+	float remaining_time[2] = {600.0f, 600.0f}; // in seconds (10 min)
 	int winner;
+	std::string m_renfort;
+
+	// sync
+	std::mutex turn_mtx;
+	std::mutex winner_mtx;
+	std::mutex remaining_time_mtx;
+	std::mutex solo_mtx;
+	std::mutex solo_location_mtx;
 };
 
 struct ClientMessage
