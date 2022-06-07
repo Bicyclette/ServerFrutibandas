@@ -6,7 +6,7 @@ NetworkServer::NetworkServer() :
 {
 	if (enet_initialize() != 0)
 	{
-		throw std::exception("An error occured while initializing ENet !");
+		throw std::runtime_error("An error occured while initializing ENet !");
 	}
 	atexit(enet_deinitialize);
 
@@ -17,7 +17,7 @@ NetworkServer::NetworkServer() :
 	if (m_server == nullptr)
 	{
 		enet_deinitialize();
-		throw std::exception("Error while trying to create the network server !");
+		throw std::runtime_error("Error while trying to create the network server !");
 	}
 }
 
@@ -30,12 +30,20 @@ NetworkServer::~NetworkServer()
 	}
 }
 
+bool NetworkServer::is_active()
+{
+	m_active_mtx.lock();
+	return m_active;
+	m_active_mtx.unlock();
+}
+
 void NetworkServer::run()
 {
 	while (m_active)
 	{
 		while (enet_host_service(m_server, &m_event, 0) > 0)
 		{
+			std::cout << "réception\n";
 			if (m_event.type == ENET_EVENT_TYPE_CONNECT)
 			{
 				m_player.emplace_back(std::make_shared<Player>("", m_event.peer));
@@ -54,9 +62,9 @@ void NetworkServer::run()
 					ENetAddress peer_address = m_event.peer->address;
 					if (player_address.host == peer_address.host && player_address.port == peer_address.port)
 					{
-						g_message_mutex.lock();
+						g_message_queue_mtx.lock();
 						g_message_queue.emplace(p, message);
-						g_message_mutex.unlock();
+						g_message_queue_mtx.unlock();
 					}
 				}
 			}
@@ -83,7 +91,9 @@ void NetworkServer::run()
 
 void NetworkServer::shutdown()
 {
+	m_active_mtx.lock();
 	m_active = false;
+	m_active_mtx.unlock();
 }
 
 void NetworkServer::send_data(ENetPeer* peer, std::string data)
@@ -113,69 +123,8 @@ void NetworkServer::matchmaking()
 			m_game.push_back(std::make_shared<Game>(m_player[opponents[0]], m_player[opponents[1]]));
 			m_player[opponents[0]]->m_game = m_game[m_game.size()-1];
 			m_player[opponents[1]]->m_game = m_game[m_game.size()-1];
-			m_game[m_game.size() - 1]->m_board.print();
 			
-			// send initial game data (players name, players profile picture, game state)
-			std::string orange_data;
-			// orange player name
-			orange_data += m_player[opponents[0]]->m_name + ":";
-			// orange player profile picture
-			orange_data += m_player[opponents[0]]->m_avatar.m_data;
-
-			std::string banane_data;
-			// banane player name
-			banane_data += m_player[opponents[1]]->m_name + ":";
-			// banane player profile picture
-			banane_data += m_player[opponents[1]]->m_avatar.m_data;
-
-			// turn
-			std::string turn = std::to_string(m_game[m_game.size() - 1]->turn);
-
-			// board
-			std::string board("");
-			for (int line{ 0 }; line < 8; ++line)
-			{
-				for (int col{ 0 }; col < 8; ++col)
-				{
-					int fruit = m_game[m_game.size() - 1]->m_board.m_fruit[line][col].m_type;
-					board += std::to_string(fruit);
-					if ((line * 8 + col) < 63) {
-						board += ".";
-					}
-					std::cout << fruit << ' ';
-				}
-				std::cout << std::endl;
-			}
-
-			// set of cards => orange
-			std::string orange_cards("");
-			orange_cards += std::to_string(m_game[m_game.size() - 1]->card[0]) + ".";
-			orange_cards += std::to_string(m_game[m_game.size() - 1]->card[1]) + ".";
-			orange_cards += std::to_string(m_game[m_game.size() - 1]->card[2]);
-
-			// set of cards => banane
-			std::string banane_cards("");
-			banane_cards += std::to_string(m_game[m_game.size() - 1]->card[3]) + ".";
-			banane_cards += std::to_string(m_game[m_game.size() - 1]->card[4]) + ".";
-			banane_cards += std::to_string(m_game[m_game.size() - 1]->card[5]);
-
-			// send for orange player
-			std::string dataOrange("g0:");
-			dataOrange += "0:"; // fruit identity
-			dataOrange += turn + ":";
-			dataOrange += banane_data + ":";
-			dataOrange += orange_cards + ":";
-			dataOrange += board;
-			send_data(m_player[opponents[0]]->m_peer, dataOrange);
-
-			// send for banane player
-			std::string dataBanane("g0:");
-			dataBanane += "1:"; // fruit identity
-			dataBanane += turn + ":";
-			dataBanane += orange_data + ":";
-			dataBanane += banane_cards + ":";
-			dataBanane += board;
-			send_data(m_player[opponents[1]]->m_peer, dataBanane);
+			// send initial data to players
 
 			// reset
 			opponents[0] = -1;
