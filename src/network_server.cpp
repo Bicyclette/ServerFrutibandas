@@ -43,14 +43,9 @@ void NetworkServer::run()
 	{
 		while (enet_host_service(m_server, &m_event, 0) > 0)
 		{
-			std::cout << "réception\n";
 			if (m_event.type == ENET_EVENT_TYPE_CONNECT)
 			{
 				m_player.emplace_back(std::make_shared<Player>("", m_event.peer));
-				std::cout << "A new client connected from ";
-				std::cout << m_event.peer->address.host << ':';
-				std::cout << m_event.peer->address.port;
-				std::cout << std::endl;
 			}
 			else if (m_event.type == ENET_EVENT_TYPE_RECEIVE)
 			{
@@ -78,6 +73,12 @@ void NetworkServer::run()
 					if (player_address.host == peer_address.host && player_address.port == peer_address.port)
 					{
 						std::cout << m_player[i]->m_name << " has been disconnected !" << std::endl;
+						if (p->m_in_game)
+						{
+							g_message_queue_mtx.lock();
+							g_message_queue.emplace(p, std::string("dc"));
+							g_message_queue_mtx.unlock();
+						}
 						m_player.erase(m_player.begin()+i);
 						break;
 					}
@@ -116,15 +117,35 @@ void NetworkServer::matchmaking()
 		}
 		if (opponents[0] != -1 && opponents[1] != -1)
 		{
+			m_player[opponents[0]]->m_in_queue_mtx.lock();
 			m_player[opponents[0]]->m_in_queue = false;
+			m_player[opponents[0]]->m_in_queue_mtx.unlock();
 			m_player[opponents[0]]->m_in_game = true;
+
+			m_player[opponents[1]]->m_in_queue_mtx.lock();
 			m_player[opponents[1]]->m_in_queue = false;
+			m_player[opponents[1]]->m_in_queue_mtx.unlock();
 			m_player[opponents[1]]->m_in_game = true;
+
 			m_game.push_back(std::make_shared<Game>(m_player[opponents[0]], m_player[opponents[1]]));
 			m_player[opponents[0]]->m_game = m_game[m_game.size()-1];
 			m_player[opponents[1]]->m_game = m_game[m_game.size()-1];
 			
 			// send initial data to players
+			m_game[m_game.size() - 1]->m_state.choose_card = true;
+			std::string cards = m_game[m_game.size() - 1]->get_free_cards();
+			std::string board = m_game[m_game.size() - 1]->m_board.to_string();
+			std::cout << board << std::endl;
+			std::shared_ptr<Player> pOrange = m_game[m_game.size() - 1]->m_player_orange;
+			std::shared_ptr<Player> pBanana = m_game[m_game.size() - 1]->m_player_banana;
+			if (m_game[m_game.size() - 1]->m_state.turn.type == Fruit::BANANE) {
+				send_data(pBanana->m_peer, "gs:nn:" + pOrange->m_name + ":pp:" + pOrange->m_avatar + ":team:1" + ":b:" + board + ":turn:1:c:" + cards);
+				send_data(pOrange->m_peer, "gs:nn:" + pBanana->m_name + ":pp:" + pBanana->m_avatar + ":team:0" + ":b:" + board + ":turn:1");
+			}
+			else {
+				send_data(pOrange->m_peer, "gs:nn:" + pBanana->m_name + ":pp:" + pBanana->m_avatar + ":team:0" + ":b:" + board + ":turn:0:c:" + cards);
+				send_data(pBanana->m_peer, "gs:nn:" + pOrange->m_name + ":pp:" + pOrange->m_avatar + ":team:1" + ":b:" + board + ":turn:0");
+			}
 
 			// reset
 			opponents[0] = -1;

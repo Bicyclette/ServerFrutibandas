@@ -12,9 +12,9 @@ include_directories(include ${ENET_INCLUDE_DIR})
 
 link_directories(${ENET_LIB_DIR})
 
-set(SRCS src/main.cpp src/network_server.cpp src/game.cpp)
+set(SRCS src/main.cpp src/network_server.cpp src/game.cpp src/logic.cpp)
 
-set(HEADERS include/network_server.hpp include/game.hpp include/avatar.hpp)
+set(HEADERS include/network_server.hpp include/game.hpp include/logic.hpp include/random.hpp)
 
 add_executable(${PROJECT_NAME} ${SRCS} ${HEADERS})
 
