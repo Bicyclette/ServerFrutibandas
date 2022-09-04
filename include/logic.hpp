@@ -4,34 +4,19 @@
 #include <string>
 #include "random.hpp"
 
-// Bounding Box
-struct AABB
-{
-	int left;
-	int right;
-	int bottom;
-	int top;
-};
-
 struct Fruit
 {
-	enum TYPE
-	{
-		BANANE,
-		ORANGE
-	};
-
 	enum STATE
 	{
-		ALIVE,
-		DEAD,
+		STAND_STILL,
+		MOVING,
 		PETRIFIED
 	};
 
-	Fruit() : state(STATE::ALIVE)
-	{}
+	Fruit() : type('x'), state(STATE::STAND_STILL) {}
+	Fruit(char t) : type(t), state(STATE::STAND_STILL) {}
 
-	TYPE type;
+	char type;
 	STATE state;
 };
 
@@ -41,43 +26,31 @@ struct Tile
 	{
 		ALIVE,
 		DEAD,
+		DYING,
 		TRAPPED
 	};
 
-	Tile() : state(STATE::ALIVE), left(nullptr), right(nullptr), down(nullptr), up(nullptr), fruit(nullptr)
+	Tile() : state(STATE::ALIVE)
 	{}
 
 	STATE state;
-	Tile* left;
-	Tile* right;
-	Tile* down;
-	Tile* up;
-	Fruit* fruit;
-};
-
-// mouvement en vague
-struct Wave
-{
-	Wave()
-	{
-		waveLeftStart = -1;
-		waveRightStart = -1;
-		waveUpStart = -1;
-		waveDownStart = -1;
-	}
-	int waveLeftStart;
-	int waveRightStart;
-	int waveUpStart;
-	int waveDownStart;
+	Fruit fruit;
 };
 
 struct Board
 {
-	Tile tile[8][8];
-	AABB boundingBox;
-	Wave waveOrange;
-	Wave waveBanane;
+	struct AABB
+	{
+		int left;
+		int right;
+		int bottom;
+		int top;
+	};
 
+	Tile tile[8][8];
+	AABB bounds;
+
+	Board(){}
 	std::string to_string();
 };
 

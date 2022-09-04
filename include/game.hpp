@@ -32,7 +32,7 @@ struct Player
 
 struct Card
 {
-	enum class TYPE
+	enum TYPE
 	{
 		CONVERSION,
 		CONFISCATION,
@@ -48,21 +48,14 @@ struct Card
 		VACHETTE
 	};
 
-	Card(int t) : type(static_cast<TYPE>(t)) {}
-
-	int getType()
+	Card(int t) : type(static_cast<Card::TYPE>(t))
 	{
-		return static_cast<int>(type);
-	}
-
-	friend bool operator==(const Card& a, const Card& b)
-	{
-		return a.type == b.type;
+		target[0] = -1;
+		target[1] = -1;
 	}
 
 	TYPE type;
-	std::shared_ptr<Player> owner;
-	glm::ivec2 target;
+	int target[2];
 };
 
 class Game
@@ -70,19 +63,18 @@ class Game
 public:
 	struct State
 	{
-		Fruit turn;
-		Fruit winner;
-		bool choose_card;
+		char turn;
+		char winner;
 	};
 public:
 	Game(std::shared_ptr<Player> playerA, std::shared_ptr<Player> playerB);
-	std::string get_free_cards();
+	std::string cards_to_string();
+
 public:
 	std::shared_ptr<Player> m_player_orange;
 	std::shared_ptr<Player> m_player_banana;
 	Board m_board;
 	State m_state;
-	std::array<Card, 12> m_cards;
 	std::array<Card, 3> m_orange_cards;
 	std::array<Card, 3> m_banana_cards;
 };

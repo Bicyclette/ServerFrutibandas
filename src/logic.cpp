@@ -3,28 +3,40 @@
 std::string Board::to_string()
 {
 	std::string data;
-	for (int line = 0; line < 8; ++line)
+	for (int line = bounds.top; line <= bounds.bottom; ++line)
 	{
-		for (int col = 0; col < 8; ++col)
+		for (int col = bounds.left; col <= bounds.right; ++col)
 		{
-			if (tile[col][line].fruit->type == Fruit::TYPE::BANANE) {
-				if (col == 7) {
-					data += "b";
+			if (tile[col][line].fruit.type != 'x')
+			{
+				if (tile[col][line].fruit.type == 'b') {
+					if (col == bounds.right) {
+						data += "b";
+					}
+					else {
+						data += "b.";
+					}
 				}
 				else {
-					data += "b.";
+					if (col == bounds.right) {
+						data += "o";
+					}
+					else {
+						data += "o.";
+					}
 				}
 			}
-			else {
-				if (col == 7) {
-					data += "o";
+			else
+			{
+				if (col == bounds.right) {
+					data += "x";
 				}
 				else {
-					data += "o.";
+					data += "x.";
 				}
 			}
 		}
-		if (line < 7) {
+		if (line < bounds.bottom) {
 			data += "\n";
 		}
 	}

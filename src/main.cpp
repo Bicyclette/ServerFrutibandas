@@ -55,20 +55,25 @@ void message_processing(int tid)
 			{
 				g_server.send_data(player->m_game->m_player_banana->m_peer, "gu");
 			}
-			// reset both player's status
-			game->m_player_banana->m_in_game = false;
-			game->m_player_banana->m_game.reset();
-			game->m_player_orange->m_in_game = false;
-			game->m_player_orange->m_game.reset();
 			// destroy game instance
 			g_server_mtx.lock();
 			auto pos = std::find(g_server.m_game.begin(), g_server.m_game.end(), game);
 			g_server.m_game.erase(pos);
 			g_server_mtx.unlock();
+			// reset both player's status
+			game->m_player_banana->m_in_game = false;
+			game->m_player_banana->m_game.reset();
+			game->m_player_orange->m_in_game = false;
+			game->m_player_orange->m_game.reset();
 		}
 		else if (message[0] == 'd' && message[1] == 'c')
 		{
 			std::shared_ptr<Game> game = player->m_game;
+			// destroy game instance
+			g_server_mtx.lock();
+			auto pos = std::find(g_server.m_game.begin(), g_server.m_game.end(), game);
+			g_server.m_game.erase(pos);
+			g_server_mtx.unlock();
 			// notify the other player that his opponent has been disconnected
 			if (player == player->m_game->m_player_banana)
 			{
@@ -82,11 +87,6 @@ void message_processing(int tid)
 				game->m_player_banana->m_in_game = false;
 				game->m_player_banana->m_game.reset();
 			}
-			// destroy game instance
-			g_server_mtx.lock();
-			auto pos = std::find(g_server.m_game.begin(), g_server.m_game.end(), game);
-			g_server.m_game.erase(pos);
-			g_server_mtx.unlock();
 		}
 		else if (message[0] == 'g' && message[1] == 'c')
 		{
@@ -94,6 +94,34 @@ void message_processing(int tid)
 			std::string data = "gc:" + player->m_name + " > " + message.substr(3);
 			g_server.send_data(player->m_game->m_player_banana->m_peer, data);
 			g_server.send_data(player->m_game->m_player_orange->m_peer, data);
+		}
+		else if (message[0] == 'm' && message[1] == 'v')
+		{
+			g_server.send_data(player->m_game->m_player_orange->m_peer, message);
+			g_server.send_data(player->m_game->m_player_banana->m_peer, message);
+		}
+		else if (message[0] == 'w' && message[1] == 'i' && message[2] == 'n')
+		{
+			std::shared_ptr<Game> game = player->m_game;
+			std::string end_game("end");
+			if (player == player->m_game->m_player_banana)
+			{
+				g_server.send_data(player->m_game->m_player_orange->m_peer, end_game);
+			}
+			else
+			{
+				g_server.send_data(player->m_game->m_player_banana->m_peer, end_game);
+			}
+			// destroy game instance
+			g_server_mtx.lock();
+			auto pos = std::find(g_server.m_game.begin(), g_server.m_game.end(), game);
+			g_server.m_game.erase(pos);
+			g_server_mtx.unlock();
+			// reset both player's status
+			game->m_player_banana->m_in_game = false;
+			game->m_player_banana->m_game.reset();
+			game->m_player_orange->m_in_game = false;
+			game->m_player_orange->m_game.reset();
 		}
 	}
 }

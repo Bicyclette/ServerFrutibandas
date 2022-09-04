@@ -132,19 +132,18 @@ void NetworkServer::matchmaking()
 			m_player[opponents[1]]->m_game = m_game[m_game.size()-1];
 			
 			// send initial data to players
-			m_game[m_game.size() - 1]->m_state.choose_card = true;
-			std::string cards = m_game[m_game.size() - 1]->get_free_cards();
+			std::string cards = m_game[m_game.size() - 1]->cards_to_string();
 			std::string board = m_game[m_game.size() - 1]->m_board.to_string();
 			std::cout << board << std::endl;
 			std::shared_ptr<Player> pOrange = m_game[m_game.size() - 1]->m_player_orange;
 			std::shared_ptr<Player> pBanana = m_game[m_game.size() - 1]->m_player_banana;
-			if (m_game[m_game.size() - 1]->m_state.turn.type == Fruit::BANANE) {
+			if (m_game[m_game.size() - 1]->m_state.turn == 'b') {
 				send_data(pBanana->m_peer, "gs:nn:" + pOrange->m_name + ":pp:" + pOrange->m_avatar + ":team:1" + ":b:" + board + ":turn:1:c:" + cards);
-				send_data(pOrange->m_peer, "gs:nn:" + pBanana->m_name + ":pp:" + pBanana->m_avatar + ":team:0" + ":b:" + board + ":turn:1");
+				send_data(pOrange->m_peer, "gs:nn:" + pBanana->m_name + ":pp:" + pBanana->m_avatar + ":team:0" + ":b:" + board + ":turn:1:c:" + cards);
 			}
 			else {
 				send_data(pOrange->m_peer, "gs:nn:" + pBanana->m_name + ":pp:" + pBanana->m_avatar + ":team:0" + ":b:" + board + ":turn:0:c:" + cards);
-				send_data(pBanana->m_peer, "gs:nn:" + pOrange->m_name + ":pp:" + pOrange->m_avatar + ":team:1" + ":b:" + board + ":turn:0");
+				send_data(pBanana->m_peer, "gs:nn:" + pOrange->m_name + ":pp:" + pOrange->m_avatar + ":team:1" + ":b:" + board + ":turn:0:c:" + cards);
 			}
 
 			// reset
