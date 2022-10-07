@@ -151,8 +151,16 @@ void message_processing(int tid)
 				reinforcement_data = message.substr(0);
 				std::cout << reinforcement_data << std::endl;
 			}
+			// else if targeted card
+			std::string target;
+			if (card_id == 0) {
+				message = message.substr(next_token + 1);
+				target = message.substr(0);
+				std::cout << "target = " << target << std::endl;
+			}
+
 			// generic card data
-			std::string card_data = effect_destination + reinforcement_data;
+			std::string card_data = effect_destination + reinforcement_data + target;
 			std::cout << "card_data = " << card_data << std::endl;
 			if (card_id < 10) {
 				card_id_str = "0" + card_id_str;
