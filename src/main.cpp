@@ -123,6 +123,52 @@ void message_processing(int tid)
 			game->m_player_orange->m_in_game = false;
 			game->m_player_orange->m_game.reset();
 		}
+		else if (message[0] == 'c' && message[1] == 'a' && message[2] == 'r' && message[3] == 'd')
+		{
+			// ignore useless data
+			message = message.substr(5);
+			std::cout << message << std::endl;
+			// get card identifier
+			int next_token = message.find_first_of('.');
+			std::string card_id_str = message.substr(0, next_token);
+			int card_id = std::atoi(card_id_str.data());
+			
+			// get card index in owner's array
+			message = message.substr(next_token + 1);
+			next_token = message.find_first_of('.');
+			std::string card_index = message.substr(0, next_token);
+			
+			// if card has an effect delayed towards enemy, get to which player it has an effect on
+			std::string effect_destination;
+			if (card_id == 4) {
+				message = message.substr(next_token + 1);
+				effect_destination = message.substr(0);
+			}
+			// else if card is reinforcement (spawn up to 3 bandas)
+			std::string reinforcement_data;
+			if (card_id == 9) {
+				message = message.substr(next_token + 1);
+				reinforcement_data = message.substr(0);
+				std::cout << reinforcement_data << std::endl;
+			}
+			// generic card data
+			std::string card_data = effect_destination + reinforcement_data;
+			std::cout << "card_data = " << card_data << std::endl;
+			if (card_id < 10) {
+				card_id_str = "0" + card_id_str;
+			}
+			
+			if (player == player->m_game->m_player_banana)
+			{
+				g_server.send_data(player->m_game->m_player_orange->m_peer, "card:" + card_id_str + ".0." + card_index + "." + card_data);
+				g_server.send_data(player->m_game->m_player_banana->m_peer, "card:" + card_id_str + ".1." + card_index + "." + card_data);
+			}
+			else
+			{
+				g_server.send_data(player->m_game->m_player_banana->m_peer, "card:" + card_id_str + ".0." + card_index + "." + card_data);
+				g_server.send_data(player->m_game->m_player_orange->m_peer, "card:" + card_id_str + ".1." + card_index + "." + card_data);
+			}
+		}
 	}
 }
 

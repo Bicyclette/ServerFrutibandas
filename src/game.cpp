@@ -46,11 +46,24 @@ Game::Game(std::shared_ptr<Player> playerA, std::shared_ptr<Player> playerB) :
 
 	// gen set of cards
 	RandomGenerator cardGen(0, 11);
-	for (int i = 0; i < 3; ++i)
+	std::array<int, 6> card_id = {-1,-1,-1,-1,-1,-1};
+	int id = cardGen.gen();
+	card_id[0] = id;
+	id = cardGen.gen();
+	for (int i = 1; i < 6; ++i)
 	{
-		m_orange_cards[i] = Card(cardGen.gen());
-		m_banana_cards[i] = Card(cardGen.gen());
+		while (std::find(card_id.begin(), card_id.end(), id) != card_id.end())
+		{
+			id = cardGen.gen();
+		}
+		card_id[i] = id;
 	}
+	m_orange_cards[0] = card_id[0];
+	m_orange_cards[1] = card_id[1];
+	m_orange_cards[2] = card_id[2];
+	m_banana_cards[0] = card_id[3];
+	m_banana_cards[1] = card_id[4];
+	m_banana_cards[2] = card_id[5];
 }
 
 std::string Game::cards_to_string()
