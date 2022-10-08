@@ -75,8 +75,9 @@ void NetworkServer::run()
 						std::cout << m_player[i]->m_name << " has been disconnected !" << std::endl;
 						if (p->m_in_game)
 						{
+							std::string dc("dc");
 							g_message_queue_mtx.lock();
-							g_message_queue.emplace(p, std::string("dc"));
+							g_message_queue.emplace(p, dc);
 							g_message_queue_mtx.unlock();
 						}
 						m_player.erase(m_player.begin()+i);

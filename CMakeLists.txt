@@ -8,9 +8,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH})
 set(CMAKE_RUNTIME_OUTPUT ${CMAKE_BINARY_DIR})
 
-include_directories(include ${ENET_INCLUDE_DIR})
+if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+	include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+	conan_basic_setup()
+else()
+	message(WARNING "The file conanbuildinfo.cmake doesn't exists, you have to run conan install first")
+endif()
 
-link_directories(${ENET_LIB_DIR})
+include_directories(include)
 
 set(SRCS src/main.cpp src/network_server.cpp src/game.cpp src/logic.cpp)
 
@@ -18,4 +23,4 @@ set(HEADERS include/network_server.hpp include/game.hpp include/logic.hpp includ
 
 add_executable(${PROJECT_NAME} ${SRCS} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${ENET_LIBS})
+target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})

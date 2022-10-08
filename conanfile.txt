@@ -1,0 +1,13 @@
+[requires]
+enet/1.3.17
+llvm-openmp/12.0.1
+
+[options]
+
+[imports]
+#bin, *.dll -> ./src/bin
+#lib, *.dylib* -> ./src/bin
+#lib, *.so* -> ./src/bin
+
+[generators]
+cmake
