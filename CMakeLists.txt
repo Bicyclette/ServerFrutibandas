@@ -9,6 +9,7 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules ${CMAKE_MODULE_PATH})
 set(CMAKE_RUNTIME_OUTPUT ${CMAKE_BINARY_DIR})
 
 if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+	set(CONAN_DISABLE_CHECK_COMPILER TRUE)
 	include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 	conan_basic_setup()
 else()
