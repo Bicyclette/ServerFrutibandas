@@ -153,7 +153,7 @@ void message_processing(int tid)
 			}
 			// else if targeted card
 			std::string target;
-			if (card_id == 0 || card_id == 6 || card_id == 10 || card_id == 11) {
+			if (card_id == 0 || card_id == 6 || card_id == 7 || card_id == 10 || card_id == 11) {
 				message = message.substr(next_token + 1);
 				target = message.substr(0);
 				std::cout << "target = " << target << std::endl;
