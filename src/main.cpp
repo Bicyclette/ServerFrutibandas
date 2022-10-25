@@ -90,7 +90,6 @@ void message_processing(int tid)
 		}
 		else if (message[0] == 'g' && message[1] == 'c')
 		{
-			std::cout << message << std::endl;
 			std::string data = "gc:" + player->m_name + " > " + message.substr(3);
 			g_server.send_data(player->m_game->m_player_banana->m_peer, data);
 			g_server.send_data(player->m_game->m_player_orange->m_peer, data);
@@ -127,7 +126,6 @@ void message_processing(int tid)
 		{
 			// ignore useless data
 			message = message.substr(5);
-			std::cout << message << std::endl;
 			// get card identifier
 			int next_token = message.find_first_of('.');
 			std::string card_id_str = message.substr(0, next_token);
@@ -149,19 +147,16 @@ void message_processing(int tid)
 			if (card_id == 9) {
 				message = message.substr(next_token + 1);
 				reinforcement_data = message.substr(0);
-				std::cout << reinforcement_data << std::endl;
 			}
 			// else if targeted card
 			std::string target;
 			if (card_id == 0 || card_id == 6 || card_id == 7 || card_id == 8 || card_id == 10 || card_id == 11) {
 				message = message.substr(next_token + 1);
 				target = message.substr(0);
-				std::cout << "target = " << target << std::endl;
 			}
 
 			// generic card data
 			std::string card_data = effect_destination + reinforcement_data + target;
-			std::cout << "card_data = " << card_data << std::endl;
 			if (card_id < 10) {
 				card_id_str = "0" + card_id_str;
 			}

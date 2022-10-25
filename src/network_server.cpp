@@ -135,7 +135,6 @@ void NetworkServer::matchmaking()
 			// send initial data to players
 			std::string cards = m_game[m_game.size() - 1]->cards_to_string();
 			std::string board = m_game[m_game.size() - 1]->m_board.to_string();
-			std::cout << board << std::endl;
 			std::shared_ptr<Player> pOrange = m_game[m_game.size() - 1]->m_player_orange;
 			std::shared_ptr<Player> pBanana = m_game[m_game.size() - 1]->m_player_banana;
 			if (m_game[m_game.size() - 1]->m_state.turn == 'b') {
