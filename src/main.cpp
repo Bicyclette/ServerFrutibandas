@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
 	// pool of threads
 	const unsigned int num_threads{ std::thread::hardware_concurrency() };
 	std::vector<std::thread> thread_pool;
-	for (unsigned int i{ 0 }; i < /*num_threads*/2; ++i)
+	for (unsigned int i{ 0 }; i < num_threads; ++i)
 	{
 		thread_pool.emplace_back(message_processing, i + 1);
 	}
