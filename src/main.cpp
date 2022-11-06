@@ -2,6 +2,17 @@
 
 NetworkServer g_server;
 
+bool isNumber(const std::string& s)
+{
+	for(const char& c : s)
+	{
+		if(std::isdigit(c) == 0){
+			return false;
+		}
+	}
+	return true;
+}
+
 void message_processing(int tid)
 {
 	while (true)
@@ -176,11 +187,26 @@ void message_processing(int tid)
 }
 
 int main(int argc, char* argv[])
-{	
+{
+	// set server port
+	if(argc == 2)
+	{
+		std::string port_str = argv[1];
+		if(isNumber(port_str)){
+			enet_uint16 port = static_cast<enet_uint16>(std::atoi(port_str.c_str()));
+			g_server.set_port(port);
+			std::cout << "Server listens on port : " << port << std::endl;
+		}
+		else{
+			std::cerr << "ERROR::INVALID_ARGUMENT = port is not a number, you must provide a valid number." << std::endl;
+			std::exit(-1);
+		}
+	}
+
 	// pool of threads
 	const unsigned int num_threads{ std::thread::hardware_concurrency() };
 	std::vector<std::thread> thread_pool;
-	for (unsigned int i{ 0 }; i < num_threads; ++i)
+	for (unsigned int i{ 0 }; i < 2/*num_threads*/; ++i)
 	{
 		thread_pool.emplace_back(message_processing, i + 1);
 	}

@@ -1,6 +1,6 @@
 #include "network_server.hpp"
 
-NetworkServer::NetworkServer() :
+NetworkServer::NetworkServer(enet_uint16 port) :
 	m_active(true),
 	m_server(nullptr)
 {
@@ -11,9 +11,9 @@ NetworkServer::NetworkServer() :
 	atexit(enet_deinitialize);
 
 	m_address.host = ENET_HOST_ANY;
-	m_address.port = 7777;
+	m_address.port = port;
 
-	m_server = enet_host_create(&m_address, 2, 1, 0, 0);
+	m_server = enet_host_create(&m_address, 512, 1, 0, 0);
 	if (m_server == nullptr)
 	{
 		enet_deinitialize();
@@ -27,6 +27,19 @@ NetworkServer::~NetworkServer()
 	for (auto& p : m_player)
 	{
 		enet_peer_disconnect(p->m_peer, 0);
+	}
+}
+
+void NetworkServer::set_port(enet_uint16 port)
+{
+	enet_host_destroy(m_server);
+	m_address.port = port;
+	
+	m_server = enet_host_create(&m_address, 512, 1, 0, 0);
+	if (m_server == nullptr)
+	{
+		enet_deinitialize();
+		throw std::runtime_error("Error while trying to create the network server !");
 	}
 }
 

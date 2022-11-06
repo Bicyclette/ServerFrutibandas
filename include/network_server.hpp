@@ -30,8 +30,9 @@ class NetworkServer
 {
 	public:
 
-		NetworkServer();
+		NetworkServer(enet_uint16 port = 7777);
 		~NetworkServer();
+		void set_port(enet_uint16 port);
 		bool is_active();
 		void run();
 		void shutdown();
