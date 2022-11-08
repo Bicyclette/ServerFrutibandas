@@ -19,6 +19,7 @@ void commands()
 	bool check_cmd = true;
 	while(check_cmd)
 	{
+		std::cout << ">";
 		std::getline(std::cin, cmd);
 		if(cmd == "Q") // close server
 		{
@@ -85,7 +86,6 @@ void message_processing(int tid)
 		else if (message[0] == 'n' && message[1] == 'n')
 		{
 			player->m_name = message.substr(3);
-			std::cout << "EVENT: " << player->m_name << " has just arrived !" << std::endl;
 		}
 		else if (message[0] == 'p' && message[1] == 'p')
 		{
@@ -242,6 +242,10 @@ int main(int argc, char* argv[])
 	welcome();
 
 	// set server port
+	if(argc == 1)
+	{
+		std::cout << "Server listens on port : " << 7777 << std::endl;
+	}
 	if(argc == 2)
 	{
 		std::string port_str = argv[1];

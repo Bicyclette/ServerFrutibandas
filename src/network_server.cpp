@@ -84,7 +84,6 @@ void NetworkServer::run()
 					ENetAddress peer_address = m_event.peer->address;
 					if (player_address.host == peer_address.host && player_address.port == peer_address.port)
 					{
-						std::cout << "EVENT: " << m_player[i]->m_name << " has been disconnected !" << std::endl;
 						if (p->m_in_game)
 						{
 							std::string dc("dc");
