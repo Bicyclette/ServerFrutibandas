@@ -13,9 +13,45 @@ bool isNumber(const std::string& s)
 	return true;
 }
 
+void commands()
+{
+	std::string cmd;
+	bool check_cmd = true;
+	while(check_cmd)
+	{
+		std::getline(std::cin, cmd);
+		if(cmd == "Q") // close server
+		{
+			check_cmd = false;
+			g_server_mtx.lock();
+			g_server.shutdown();
+			g_server_mtx.unlock();
+			std::cout << "CIAO ! ;)" << std::endl;
+		}
+		else if(cmd == "GC") // request number of ongoing games
+		{
+			g_server_mtx.lock();
+			size_t num_games = g_server.m_game.size();
+			g_server_mtx.unlock();
+			std::cout << "Number of ongoing games = " << num_games << std::endl;
+		}
+		else if(cmd == "PC") // request number of connected players
+		{
+			g_server_mtx.lock();
+			size_t num_players = g_server.get_player_count();
+			g_server_mtx.unlock();
+			std::cout << "Number of connected players = " << num_players << std::endl;
+		}
+		else
+		{
+			std::cout << "ERROR::UNKNOWN_COMMAND (" << cmd << ")" << std::endl;
+		}
+	}
+}
+
 void message_processing(int tid)
 {
-	while (true)
+	while (g_server.is_active())
 	{
 		ClientMessage client_message;
 		g_server.g_message_queue_mtx.lock();
@@ -49,6 +85,7 @@ void message_processing(int tid)
 		else if (message[0] == 'n' && message[1] == 'n')
 		{
 			player->m_name = message.substr(3);
+			std::cout << "EVENT: " << player->m_name << " has just arrived !" << std::endl;
 		}
 		else if (message[0] == 'p' && message[1] == 'p')
 		{
@@ -186,8 +223,24 @@ void message_processing(int tid)
 	}
 }
 
+void welcome()
+{
+	const std::string frutibandas =
+	"========================================================\n"
+	"   _            _   _ _                     _           \n"
+	" / _|_ __ _   _| |_(_) |__   __ _ _ __   __| | __ _ ___ \n"
+	"| |_| '__| | | | __| | '_ \\ / _` | '_ \\ / _` |/ _` / __|\n"
+	"|  _| |  | |_| | |_| | |_) | (_| | | | | (_| | (_| \\__ \\\n"
+	"|_| |_|   \\__,_|\\__|_|_.__/ \\__,_|_| |_|\\__,_|\\__,_|___/\n"
+	"========================================================\n";
+	std::cout << frutibandas << std::endl;
+}
+
 int main(int argc, char* argv[])
 {
+	// Welcome message
+	welcome();
+
 	// set server port
 	if(argc == 2)
 	{
@@ -202,6 +255,9 @@ int main(int argc, char* argv[])
 			std::exit(-1);
 		}
 	}
+
+	// thread for server commands
+	std::thread thr_cmd(commands);
 
 	// pool of threads
 	const unsigned int num_threads{ std::thread::hardware_concurrency() };
@@ -218,5 +274,7 @@ int main(int argc, char* argv[])
 	for (auto& thr : thread_pool) {
 		thr.join();
 	}
+	thr_cmd.join();
+
 	return 0;
 }

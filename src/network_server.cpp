@@ -13,7 +13,7 @@ NetworkServer::NetworkServer(enet_uint16 port) :
 	m_address.host = ENET_HOST_ANY;
 	m_address.port = port;
 
-	m_server = enet_host_create(&m_address, 512, 1, 0, 0);
+	m_server = enet_host_create(&m_address, 1024, 1, 0, 0);
 	if (m_server == nullptr)
 	{
 		enet_deinitialize();
@@ -35,7 +35,7 @@ void NetworkServer::set_port(enet_uint16 port)
 	enet_host_destroy(m_server);
 	m_address.port = port;
 	
-	m_server = enet_host_create(&m_address, 512, 1, 0, 0);
+	m_server = enet_host_create(&m_address, 1024, 1, 0, 0);
 	if (m_server == nullptr)
 	{
 		enet_deinitialize();
@@ -45,16 +45,15 @@ void NetworkServer::set_port(enet_uint16 port)
 
 bool NetworkServer::is_active()
 {
-	m_active_mtx.lock();
+	std::unique_lock<std::mutex> lk(m_active_mtx);
 	return m_active;
-	m_active_mtx.unlock();
 }
 
 void NetworkServer::run()
 {
 	while (m_active)
 	{
-		while (enet_host_service(m_server, &m_event, 0) > 0)
+		if (enet_host_service(m_server, &m_event, 0) > 0)
 		{
 			if (m_event.type == ENET_EVENT_TYPE_CONNECT)
 			{
@@ -85,7 +84,7 @@ void NetworkServer::run()
 					ENetAddress peer_address = m_event.peer->address;
 					if (player_address.host == peer_address.host && player_address.port == peer_address.port)
 					{
-						std::cout << m_player[i]->m_name << " has been disconnected !" << std::endl;
+						std::cout << "EVENT: " << m_player[i]->m_name << " has been disconnected !" << std::endl;
 						if (p->m_in_game)
 						{
 							std::string dc("dc");
@@ -115,6 +114,11 @@ void NetworkServer::send_data(ENetPeer* peer, std::string data)
 {
 	ENetPacket* packet = enet_packet_create(data.c_str(), data.size() + 1, ENET_PACKET_FLAG_RELIABLE);
 	enet_peer_send(peer, 0, packet);
+}
+
+size_t NetworkServer::get_player_count() const
+{
+	return m_player.size();
 }
 
 void NetworkServer::matchmaking()

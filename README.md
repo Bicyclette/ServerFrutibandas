@@ -4,6 +4,10 @@
 C++ server for Frutibandas.<br><br>
 </p>
 
+<p align="center">
+<img alt="command_line_server" src="imgs/server.png">
+</p>
+
 ## Getting started
 
 ### Dependencies
@@ -17,3 +21,9 @@ C++ server for Frutibandas.<br><br>
 conan install . -s build_type=Release --build missing --install-folder=build
 cmake -B build -S .
 ```
+
+## Commands
+
+- PC = print the number of players connected
+- GC = print the number of ongoing games
+- Q  = shtudown the server

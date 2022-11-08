@@ -37,6 +37,7 @@ class NetworkServer
 		void run();
 		void shutdown();
 		void send_data(ENetPeer* peer, std::string data);
+		size_t get_player_count() const;
 
 	private:
 
