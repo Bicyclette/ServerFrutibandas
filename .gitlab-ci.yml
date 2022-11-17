@@ -1,0 +1,17 @@
+stages:
+  - "build"
+
+build-linux:
+  stage: "build"
+  needs: []
+  tags:
+    - "linux"
+  image: "conanio/clang10:1.54.0"
+  script:
+    - "conan install . -s build_type=Release --build missing --install-folder=build"
+    - "cmake -B build -S ."
+    - "cmake --build build"
+    - "mv ./build/bin/serverFrutibandas ./serverFrutibandas"
+  artifacts:
+    paths:
+      - "serverFrutibandas"
