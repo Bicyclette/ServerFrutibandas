@@ -25,7 +25,7 @@ set(HEADERS include/network_server.hpp include/game.hpp include/logic.hpp includ
 add_executable(${PROJECT_NAME} ${SRCS} ${HEADERS})
 
 if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-	find_package(OPENMP RAQUIRED)
+	find_package(OPENMP REQUIRED)
 	if(OPENMP_FOUND)
 		target_link_libraries(${PROJECT_NAME} ${OpenMP_LD_FLAGS})
 	else()
