@@ -20,7 +20,7 @@ C++ server for Frutibandas.<br><br>
 ```
 conan install . -s build_type=Release --build missing --install-folder=build
 cmake -B build -S .
-cmake --build build
+cmake --build build --config Release
 ```
 
 ## Commands

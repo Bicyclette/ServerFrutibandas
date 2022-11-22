@@ -16,9 +16,6 @@ else()
 	message(WARNING "The file conanbuildinfo.cmake doesn't exists, you have to run conan install first")
 endif()
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-
 include_directories(include)
 
 set(SRCS src/main.cpp src/network_server.cpp src/game.cpp src/logic.cpp)
@@ -27,4 +24,4 @@ set(HEADERS include/network_server.hpp include/game.hpp include/logic.hpp includ
 
 add_executable(${PROJECT_NAME} ${SRCS} ${HEADERS})
 
-target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS} Threads::Threads)
+target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
