@@ -24,4 +24,13 @@ set(HEADERS include/network_server.hpp include/game.hpp include/logic.hpp includ
 
 add_executable(${PROJECT_NAME} ${SRCS} ${HEADERS})
 
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+	find_package(OpenMP COMPONENTS CXX)
+	if(OpenMP_CXX_FOUND)
+		target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
+	else()
+		message(FATAL_ERROR "OpenMP not found.")
+	endif()
+endif()
+
 target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
