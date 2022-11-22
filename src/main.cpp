@@ -249,7 +249,8 @@ int main(int argc, char* argv[])
 	// Welcome message
 	welcome();
 
-	// set server port
+	// set server port and interactive mode
+	bool interactive = false;
 	if(argc == 1)
 	{
 		std::cout << "Server listens on port : " << 7777 << std::endl;
@@ -267,9 +268,27 @@ int main(int argc, char* argv[])
 			std::exit(-1);
 		}
 	}
-
-	// thread for server commands
-	std::thread thr_cmd(commands);
+	else if(argc == 3)
+	{
+		std::string port_str = argv[1];
+		if(isNumber(port_str)){
+			enet_uint16 port = static_cast<enet_uint16>(std::atoi(port_str.c_str()));
+			g_server.set_port(port);
+			std::cout << "Server listens on port : " << port << std::endl;
+		}
+		else{
+			std::cerr << "ERROR::INVALID_ARGUMENT : port is not a number, you must provide a valid number." << std::endl;
+			std::exit(-1);
+		}
+		std::string interactive_str = argv[2];
+		if(interactive_str == "--interactive"){
+			interactive = true;
+		}
+		else{
+			std::cerr << "ERROR::INVALID_ARGUMENT : second argument must be \"--interactive\"" << std::endl;
+			std::exit(-1);
+		}
+	}
 
 	// pool of threads
 	const unsigned int num_threads{ std::thread::hardware_concurrency() };
@@ -277,6 +296,10 @@ int main(int argc, char* argv[])
 	for (unsigned int i{ 0 }; i < (num_threads-1); ++i)
 	{
 		thread_pool.emplace_back(message_processing, i + 1);
+	}
+	if(interactive)
+	{
+		thread_pool.emplace_back(commands);
 	}
 
 	// run server
@@ -286,7 +309,6 @@ int main(int argc, char* argv[])
 	for (auto& thr : thread_pool) {
 		thr.join();
 	}
-	thr_cmd.join();
 
 	return 0;
 }
