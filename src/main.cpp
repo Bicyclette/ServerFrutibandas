@@ -142,6 +142,14 @@ void message_processing(int tid)
 			g_server.send_data(player->m_game->m_player_banana->m_peer, data);
 			g_server.send_data(player->m_game->m_player_orange->m_peer, data);
 		}
+		else if (message[0] == 'c' && message[1] == 'p')
+		{
+			g_server_mtx.lock();
+			size_t num_players = g_server.get_player_count();
+			g_server_mtx.unlock();
+			std::string data = "cp:" + std::to_string(num_players);
+			g_server.send_data(player->m_peer, data);
+		}
 		else if (message[0] == 'm' && message[1] == 'v')
 		{
 			g_server.send_data(player->m_game->m_player_orange->m_peer, message);
