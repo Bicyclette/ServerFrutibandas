@@ -112,7 +112,7 @@ void NetworkServer::shutdown()
 void NetworkServer::send_data(ENetPeer* peer, std::string data)
 {
 	ENetPacket* packet = enet_packet_create(data.c_str(), data.size() + 1, ENET_PACKET_FLAG_RELIABLE);
-	enet_peer_send(peer, 0, packet);
+	while(enet_peer_send(peer, 0, packet) < 0){}
 }
 
 size_t NetworkServer::get_player_count() const
