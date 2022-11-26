@@ -112,7 +112,7 @@ void NetworkServer::shutdown()
 void NetworkServer::send_data(ENetPeer* peer, std::string data)
 {
 	ENetPacket* packet = enet_packet_create(data.c_str(), data.size() + 1, ENET_PACKET_FLAG_RELIABLE);
-	while(enet_peer_send(peer, 0, packet) < 0){}
+	enet_peer_send(peer, 0, packet);
 }
 
 size_t NetworkServer::get_player_count() const
@@ -125,35 +125,52 @@ void NetworkServer::matchmaking()
 	int opponents[2] = { -1,-1 };
 	for (int i{ 0 }; i < m_player.size(); ++i)
 	{
-		if (m_player[i]->m_in_queue)
+		if (m_player[i]->is_in_queue())
 		{
-			if (opponents[0] == -1)
+			if (opponents[0] == -1) {
 				opponents[0] = i;
-			else if (opponents[1] == -1)
-				opponents[1] = i;
+			}
+			else if(m_player[opponents[0]]->is_in_queue())
+			{
+				if (opponents[1] == -1) {
+					opponents[1] = i;
+				}
+			}
+			else {
+				opponents[0] = -1;
+			}
 		}
 		if (opponents[0] != -1 && opponents[1] != -1)
 		{
-			m_player[opponents[0]]->m_in_queue_mtx.lock();
-			m_player[opponents[0]]->m_in_queue = false;
-			m_player[opponents[0]]->m_in_queue_mtx.unlock();
-			m_player[opponents[0]]->m_in_game = true;
+			std::shared_ptr<Player> p1 = m_player[opponents[0]];
+			std::shared_ptr<Player> p2 = m_player[opponents[1]];
 
-			m_player[opponents[1]]->m_in_queue_mtx.lock();
-			m_player[opponents[1]]->m_in_queue = false;
-			m_player[opponents[1]]->m_in_queue_mtx.unlock();
-			m_player[opponents[1]]->m_in_game = true;
+			if (!p1->is_in_queue() || !p2->is_in_queue())
+			{
+				return;
+			}
 
-			m_game.push_back(std::make_shared<Game>(m_player[opponents[0]], m_player[opponents[1]]));
-			m_player[opponents[0]]->m_game = m_game[m_game.size()-1];
-			m_player[opponents[1]]->m_game = m_game[m_game.size()-1];
+			p1->m_in_queue_mtx.lock();
+			p1->m_in_queue = false;
+			p1->m_in_queue_mtx.unlock();
+			p1->m_in_game = true;
+
+			p2->m_in_queue_mtx.lock();
+			p2->m_in_queue = false;
+			p2->m_in_queue_mtx.unlock();
+			p2->m_in_game = true;
+
+			std::shared_ptr<Game> g = std::make_shared<Game>(p1, p2);
+			m_game.push_back(g);
+			p1->m_game = g;
+			p2->m_game = g;
 			
 			// send initial data to players
-			std::string cards = m_game[m_game.size() - 1]->cards_to_string();
-			std::string board = m_game[m_game.size() - 1]->m_board.to_string();
-			std::shared_ptr<Player> pOrange = m_game[m_game.size() - 1]->m_player_orange;
-			std::shared_ptr<Player> pBanana = m_game[m_game.size() - 1]->m_player_banana;
-			if (m_game[m_game.size() - 1]->m_state.turn == 'b') {
+			std::string cards = g->cards_to_string();
+			std::string board = g->m_board.to_string();
+			std::shared_ptr<Player> pOrange = g->m_player_orange;
+			std::shared_ptr<Player> pBanana = g->m_player_banana;
+			if (g->m_state.turn == 'b') {
 				send_data(pBanana->m_peer, "gs:nn:" + pOrange->m_name + ":pp:" + pOrange->m_avatar + ":team:1" + ":b:" + board + ":turn:1:c:" + cards);
 				send_data(pOrange->m_peer, "gs:nn:" + pBanana->m_name + ":pp:" + pBanana->m_avatar + ":team:0" + ":b:" + board + ":turn:1:c:" + cards);
 			}
@@ -165,6 +182,7 @@ void NetworkServer::matchmaking()
 			// reset
 			opponents[0] = -1;
 			opponents[1] = -1;
+			return;
 		}
 	}
 }

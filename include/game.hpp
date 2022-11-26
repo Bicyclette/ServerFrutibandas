@@ -21,6 +21,12 @@ struct Player
 	Player(std::string name, ENetPeer* peer) : m_name(name), m_peer(peer), m_in_queue(false), m_in_game(false)
 	{}
 
+	bool is_in_queue()
+	{
+		std::unique_lock<std::mutex> lk(m_in_queue_mtx);
+		return m_in_queue;
+	}
+
 	std::string m_name;
 	std::string m_avatar;
 	std::shared_ptr<Game> m_game;
