@@ -84,6 +84,7 @@ void NetworkServer::run()
 					ENetAddress peer_address = m_event.peer->address;
 					if (player_address.host == peer_address.host && player_address.port == peer_address.port)
 					{
+						std::cout << p->m_name << " is now disconnected." << std::endl;
 						if (p->m_in_game)
 						{
 							std::string dc("dc");
@@ -92,6 +93,10 @@ void NetworkServer::run()
 							g_message_queue_mtx.unlock();
 						}
 						m_player.erase(m_player.begin()+i);
+						g_server_mtx.lock();
+						size_t num_players = get_player_count();
+						g_server_mtx.unlock();
+						std::cout << "Number of connected players = " << num_players << std::endl;
 						break;
 					}
 				}

@@ -88,6 +88,11 @@ void message_processing(int tid)
 		else if (msg_type.compare("nn") == 0)
 		{
 			player->m_name = message.substr(3);
+			std::cout << "New connection: " << player->m_name << "." << std::endl;
+			g_server_mtx.lock();
+			size_t num_players = g_server.get_player_count();
+			g_server_mtx.unlock();
+			std::cout << "Number of connected players = " << num_players << std::endl;
 		}
 		else if (msg_type.compare("pp") == 0)
 		{
