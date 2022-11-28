@@ -89,9 +89,7 @@ void message_processing(int tid)
 		{
 			player->m_name = message.substr(3);
 			std::cout << "New connection: " << player->m_name << "." << std::endl;
-			g_server_mtx.lock();
 			size_t num_players = g_server.get_player_count();
-			g_server_mtx.unlock();
 			std::cout << "Number of connected players = " << num_players << std::endl;
 		}
 		else if (msg_type.compare("pp") == 0)
@@ -285,6 +283,7 @@ int main(int argc, char* argv[])
 			std::exit(-1);
 		}
 	}
+	/*
 	else if(argc == 3)
 	{
 		std::string port_str = argv[1];
@@ -306,10 +305,11 @@ int main(int argc, char* argv[])
 			std::exit(-1);
 		}
 	}
+	*/
 
 	// pool of threads
 	std::vector<std::thread> thread_pool;
-	for (unsigned int i{ 0 }; i < 1; ++i)
+	for (unsigned int i{ 0 }; i < 4; ++i)
 	{
 		thread_pool.emplace_back(message_processing, i + 1);
 	}

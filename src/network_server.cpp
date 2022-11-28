@@ -93,9 +93,7 @@ void NetworkServer::run()
 							g_message_queue_mtx.unlock();
 						}
 						m_player.erase(m_player.begin()+i);
-						g_server_mtx.lock();
 						size_t num_players = get_player_count();
-						g_server_mtx.unlock();
 						std::cout << "Number of connected players = " << num_players << std::endl;
 						break;
 					}
