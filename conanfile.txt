@@ -9,4 +9,5 @@ enet/1.3.17
 #lib, *.so* -> ./src/bin
 
 [generators]
-cmake
+CMakeDeps
+CMakeToolchain

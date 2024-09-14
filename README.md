@@ -18,8 +18,8 @@ C++ server for Frutibandas.<br><br>
 ## Build
 
 ```
-conan install . -s build_type=Release --build missing --install-folder=build
-cmake -B build -S .
+conan install . -s build_type=Release --build missing -of=build
+cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
