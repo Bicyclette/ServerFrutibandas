@@ -146,8 +146,11 @@ void message_processing(int tid)
 		else if (msg_type.compare("gc") == 0)
 		{
 			std::string data = "gc:" + player->m_name + " > " + message.substr(3);
-			g_server.send_data(player->m_game->m_player_banana->m_peer, data);
-			g_server.send_data(player->m_game->m_player_orange->m_peer, data);
+			if(player->m_game.get() != nullptr)
+			{
+				g_server.send_data(player->m_game->m_player_banana->m_peer, data);
+				g_server.send_data(player->m_game->m_player_orange->m_peer, data);
+			}
 		}
 		else if (msg_type.compare("cp") == 0)
 		{
